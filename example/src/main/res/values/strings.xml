@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GS805 Serial Example</string>
+    <string name="btn_list_devices">List Devices</string>
+    <string name="btn_connect">Connect</string>
+    <string name="btn_disconnect">Disconnect</string>
+    <string name="btn_make_drink">Make Hot Drink 1</string>
+    <string name="btn_get_status">Get Status</string>
+    <string name="btn_get_error">Get Error Code</string>
+    <string name="btn_get_balance">Get Balance</string>
+    <string name="btn_set_hot_temp">Set Hot Temp (90/70)</string>
+    <string name="btn_set_cold_temp">Set Cold Temp (10/5)</string>
+    <string name="btn_clear_log">Clear Log</string>
+    <string name="status_disconnected">Disconnected</string>
+    <string name="status_connected">Connected: %s</string>
+</resources>

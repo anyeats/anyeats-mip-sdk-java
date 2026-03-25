@@ -1,0 +1,12 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures
+.externalNativeBuild/
+.cxx/
+local.properties
+/gs805serial/build/
+/example/build/
