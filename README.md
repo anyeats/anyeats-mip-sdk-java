@@ -115,6 +115,59 @@ GS805Serial (Public API)
 └── MdbCashless (MDB 카드리더 - 별도 포트)
 ```
 
+## MDB 카드 결제 연동
+
+SDK에 포함된 `MdbCashless` 클래스를 통해 MDB-RS232 브릿지 기반 캐시리스 카드 리더를 제어할 수 있습니다.
+GS805 머신과는 **별도의 시리얼 포트**를 사용합니다.
+
+```kotlin
+// MDB 카드리더 인스턴스 (GS805Serial과 별도)
+val mdb = MdbCashless()
+
+// 1. MDB 브릿지 연결
+val mdbDevices = mdb.listDevices()
+mdb.connect(mdbDevices.first())
+
+// 2. 초기 설정 (앱 시작 시 1회)
+mdb.setup(maxPrice = 0xFFFF, minPrice = 0x0000)
+mdb.enable()
+
+// 3. 결제 이벤트 수신
+mdb.eventFlow.collect { event ->
+    when (event.type) {
+        CashlessEventType.CARD_DETECTED -> {
+            mdb.requestVend(price = 1000, itemNumber = 1)
+        }
+        CashlessEventType.VEND_APPROVED -> {
+            gs805.makeDrink(DrinkNumber.HOT_DRINK_1)  // 음료 제조
+            mdb.vendSuccess(itemNumber = 1)
+            mdb.sessionComplete()
+        }
+        CashlessEventType.VEND_DENIED -> {
+            mdb.sessionComplete()
+        }
+        else -> {}
+    }
+}
+```
+
+### MDB API 요약
+
+| 메서드 | 설명 |
+|---|---|
+| `listDevices()` | MDB 브릿지 디바이스 목록 |
+| `connect(device)` | MDB-RS232 브릿지 연결 |
+| `disconnect()` | 연결 해제 |
+| `setup(maxPrice?, minPrice?)` | 카드 리더 초기화 |
+| `enable()` / `disable()` | 카드 리더 활성화/비활성화 |
+| `requestVend(price, itemNumber?)` | 결제 요청 |
+| `vendSuccess(itemNumber?)` | 배출 성공 알림 |
+| `vendCancel()` | 벤딩 취소 |
+| `cashSale(price, itemNumber?)` | 현금 판매 보고 |
+| `sessionComplete()` | 세션 종료 |
+
+> 자세한 내용은 [ShakeBox_MDB_Payment_Guide](ShakeBox_MDB_Payment_Guide.html) 참조
+
 ## 커스텀 음료 제조 (R시리즈)
 
 ### 방법 1: 레시피 정의 후 실행
