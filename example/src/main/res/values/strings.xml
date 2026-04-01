@@ -1,16 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">GS805 Serial Example</string>
+
+    <!-- Status -->
+    <string name="status_disconnected">Disconnected</string>
+    <string name="status_connected">Connected: %s</string>
+
+    <!-- Section Headers -->
+    <string name="section_connection">Connection</string>
+    <string name="section_drink">Drink</string>
+    <string name="section_temperature">Temperature</string>
+    <string name="section_info">Info</string>
+    <string name="section_maintenance">Maintenance</string>
+    <string name="section_extended">Extended (Series 3/R)</string>
+    <string name="section_recipe">Recipe (R-Series)</string>
+    <string name="section_mdb">MDB Payment</string>
+
+    <!-- Connection -->
     <string name="btn_list_devices">List Devices</string>
     <string name="btn_connect">Connect</string>
     <string name="btn_disconnect">Disconnect</string>
-    <string name="btn_make_drink">Make Hot Drink 1</string>
-    <string name="btn_get_status">Get Status</string>
-    <string name="btn_get_error">Get Error Code</string>
-    <string name="btn_get_balance">Get Balance</string>
-    <string name="btn_set_hot_temp">Set Hot Temp (90/70)</string>
-    <string name="btn_set_cold_temp">Set Cold Temp (10/5)</string>
+
+    <!-- Drink -->
+    <string name="btn_make_drink">Make Drink</string>
+    <string name="btn_set_drink_price">Set Price (50)</string>
+    <string name="btn_get_sales_count">Sales Count</string>
+
+    <!-- Temperature -->
+    <string name="btn_set_hot_temp">Hot (90/70)</string>
+    <string name="btn_set_cold_temp">Cold (10/5)</string>
+
+    <!-- Info -->
+    <string name="btn_get_status">Status</string>
+    <string name="btn_get_error">Error Info</string>
+    <string name="btn_get_error_code">Error Code</string>
+    <string name="btn_get_balance">Balance</string>
+
+    <!-- Maintenance -->
+    <string name="btn_set_cup_drop_mode">Cup Mode</string>
+    <string name="btn_test_cup_drop">Test Cup</string>
+    <string name="btn_auto_inspection">Inspection</string>
+    <string name="btn_clean_all_pipes">Clean All</string>
+    <string name="btn_clean_specific_pipe">Clean Pipe 1</string>
+    <string name="btn_return_change">Return Change</string>
+
+    <!-- Extended (Series 3/R) -->
+    <string name="btn_unit_function_test">Unit Test</string>
+    <string name="btn_lock_door">Lock</string>
+    <string name="btn_unlock_door">Unlock</string>
+    <string name="btn_get_lock_status">Lock Status</string>
+    <string name="btn_water_refill">Water Refill</string>
+    <string name="btn_get_controller_status">Controller</string>
+    <string name="btn_get_drink_status">Drink Status</string>
+    <string name="btn_get_object_exception">Obj Exception</string>
+    <string name="btn_force_stop_drink">Stop Drink</string>
+    <string name="btn_force_stop_cup">Stop Cup</string>
+    <string name="btn_cup_delivery">Cup Delivery</string>
+
+    <!-- Recipe (R-Series) -->
+    <string name="btn_set_recipe">Set Recipe</string>
+    <string name="btn_execute_channel">Exec Channel</string>
+
+    <!-- MDB Payment -->
+    <string name="btn_mdb_list_devices">List Devices</string>
+    <string name="btn_mdb_connect">Connect</string>
+    <string name="btn_mdb_disconnect">Disconnect</string>
+    <string name="btn_mdb_setup">Setup</string>
+    <string name="btn_mdb_enable">Enable</string>
+    <string name="btn_mdb_disable">Disable</string>
+    <string name="btn_mdb_request_vend">Request Vend</string>
+    <string name="btn_mdb_vend_success">Vend Success</string>
+    <string name="btn_mdb_vend_cancel">Vend Cancel</string>
+    <string name="btn_mdb_session_complete">Session End</string>
+    <string name="btn_mdb_request_id">Request ID</string>
+    <string name="btn_mdb_cash_sale">Cash Sale</string>
+
+    <!-- Utility -->
     <string name="btn_clear_log">Clear Log</string>
-    <string name="status_disconnected">Disconnected</string>
-    <string name="status_connected">Connected: %s</string>
 </resources>
