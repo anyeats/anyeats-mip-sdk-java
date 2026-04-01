@@ -240,11 +240,23 @@
   <div class="cover-title">MDB Payment Guide</div>
   <div class="cover-subtitle">Android SDK (Kotlin)</div>
   <div class="cover-meta">
-    <strong>Version</strong> 1.0.0<br>
-    <strong>Date</strong> 2026-03-26<br>
-    <strong>Author</strong> AnyEats Co., Ltd.<br>
+    <strong>Version</strong> 0.1<br>
+    <strong>Date</strong> 2026-04-01<br>
+    <strong>Author</strong> Anyeats World Co., Ltd.<br>
+    <strong>Contact</strong> rnd@anyeats.co.kr<br>
     <strong>Classification</strong> Confidential
   </div>
+</div>
+
+<!-- ==================== 문서 이력 ==================== -->
+<div class="toc">
+  <h2>문서 이력</h2>
+  <table>
+    <thead><tr><th>버전</th><th>날짜</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr><td>0.1</td><td>2026-04-01</td><td>초판 작성</td></tr>
+    </tbody>
+  </table>
 </div>
 
 <!-- ==================== TOC ==================== -->
@@ -271,7 +283,6 @@
     <li class="toc-sub"><a href="#sec5-2">5.2 데이터 형식</a></li>
     <li><a href="#sec6">6. 에러 처리</a></li>
     <li><a href="#sec7">7. 기술 사양</a></li>
-    <li><a href="#sec8">8. 문서 이력</a></li>
   </ol>
 </div>
 
@@ -339,7 +350,8 @@ dependencyResolutionManagement {
 
 <span class="cmt">// build.gradle.kts</span>
 dependencies {
-    implementation(<span class="str">"com.github.anyeats:anyeats-mip-sdk-java:1.0.0"</span>)
+    <span class="cmt">-- SDK 검증진행중, 검증 후 제공 --</span>
+    <span class="cmt">// implementation("com.github.anyeats:anyeats-***-***-***:1.0.0")</span>
 }</code></pre>
 
 <h3>Import</h3>
@@ -652,17 +664,8 @@ mdb.eventFlow.<span class="fn">collect</span> { event ->
   <tr><th>패키지</th><td><code>kr.co.anyeats.gs805serial.mdb</code></td></tr>
 </table>
 
-<!-- ==================== 8. 문서 이력 ==================== -->
-<h1 id="sec8">8. 문서 이력</h1>
-<table>
-  <thead><tr><th>버전</th><th>날짜</th><th>내용</th></tr></thead>
-  <tbody>
-    <tr><td>1.0.0</td><td>2026-03-26</td><td>초판 작성</td></tr>
-  </tbody>
-</table>
-
 <div class="footer">
-  &copy; 2026 AnyEats Co., Ltd. All rights reserved. &mdash; Confidential
+  &copy; 2026 Anyeats World Co., Ltd. All rights reserved. &mdash; Confidential
 </div>
 
 </body>

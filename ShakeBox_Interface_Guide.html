@@ -240,11 +240,23 @@
   <div class="cover-title">Interface Guide</div>
   <div class="cover-subtitle">Android SDK (Kotlin)</div>
   <div class="cover-meta">
-    <strong>Version</strong> 1.0.0<br>
-    <strong>Date</strong> 2026-03-25<br>
-    <strong>Author</strong> AnyEats Co., Ltd.<br>
+    <strong>Version</strong> 0.1<br>
+    <strong>Date</strong> 2026-04-01<br>
+    <strong>Author</strong> Anyeats World Co., Ltd.<br>
+    <strong>Contact</strong> rnd@anyeats.co.kr<br>
     <strong>Classification</strong> Confidential
   </div>
+</div>
+
+<!-- ==================== 문서 이력 ==================== -->
+<div class="toc">
+  <h2>문서 이력</h2>
+  <table>
+    <thead><tr><th>버전</th><th>날짜</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr><td>0.1</td><td>2026-04-01</td><td>초판 작성 — 전체 API (기본 14개 + 능동보고 4개 + R시리즈 2개 + Series 3/R 확장 11개)</td></tr>
+    </tbody>
+  </table>
 </div>
 
 <!-- ==================== TOC ==================== -->
@@ -269,7 +281,6 @@
     <li class="toc-sub"><a href="#sec5-1">5.1 레시피 정의 후 실행</a></li>
     <li class="toc-sub"><a href="#sec5-2">5.2 채널 즉시 실행</a></li>
     <li><a href="#sec6">6. 기술 사양</a></li>
-    <li><a href="#sec7">7. 문서 이력</a></li>
   </ol>
 </div>
 
@@ -328,7 +339,8 @@ dependencyResolutionManagement {
 
 <span class="cmt">// build.gradle.kts</span>
 dependencies {
-    implementation(<span class="str">"com.github.anyeats:anyeats-mip-sdk-java:1.0.0"</span>)
+    <span class="cmt">-- SDK 검증진행중, 검증 후 제공 --</span>
+    <span class="cmt">// implementation("com.github.anyeats:anyeats-***-***-***:1.0.0")</span>
 }</code></pre>
 
 <h2>기술 스택</h2>
@@ -542,17 +554,8 @@ gs805.<span class="fn">executeChannel</span>(
   <tr><th>패키지</th><td><code>kr.co.anyeats.gs805serial</code></td></tr>
 </table>
 
-<!-- ==================== 7. 문서 이력 ==================== -->
-<h1 id="sec7">7. 문서 이력</h1>
-<table>
-  <thead><tr><th>버전</th><th>날짜</th><th>내용</th></tr></thead>
-  <tbody>
-    <tr><td>1.0.0</td><td>2026-03-25</td><td>초판 작성 — 전체 API (기본 14개 + 능동보고 4개 + R시리즈 2개 + Series 3/R 확장 11개)</td></tr>
-  </tbody>
-</table>
-
 <div class="footer">
-  &copy; 2026 AnyEats Co., Ltd. All rights reserved. &mdash; Confidential
+  &copy; 2026 Anyeats World Co., Ltd. All rights reserved. &mdash; Confidential
 </div>
 
 </body>
