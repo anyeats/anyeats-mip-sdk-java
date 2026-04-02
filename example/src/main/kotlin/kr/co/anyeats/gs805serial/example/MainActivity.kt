@@ -13,6 +13,7 @@ import kr.co.anyeats.gs805serial.GS805Serial
 import kr.co.anyeats.gs805serial.model.*
 import kr.co.anyeats.gs805serial.serial.SerialDevice
 import kr.co.anyeats.gs805serial.serial.UsbSerialConnection
+import kr.co.anyeats.gs805serial.serial.UartSerialConnection
 import kr.co.anyeats.gs805serial.mdb.MdbCashless
 import java.text.SimpleDateFormat
 import java.util.*
@@ -33,8 +34,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        gs805 = GS805Serial(this, enableLogging = true)
-        mdbCashless = MdbCashless(UsbSerialConnection(this))
+        gs805 = GS805Serial(this, connection = UartSerialConnection(), enableLogging = true)
+        mdbCashless = MdbCashless(UartSerialConnection())
 
         tvStatus = findViewById(R.id.tvStatus)
         tvLog = findViewById(R.id.tvLog)

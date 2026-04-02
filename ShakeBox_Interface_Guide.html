@@ -254,6 +254,7 @@
   <table>
     <thead><tr><th>버전</th><th>날짜</th><th>내용</th></tr></thead>
     <tbody>
+      <tr><td>0.1.1</td><td>2026-04-02</td><td>Hardware UART (UartSerialConnection) 연결 방식 추가</td></tr>
       <tr><td>0.1</td><td>2026-04-01</td><td>초판 작성 — 전체 API (기본 14개 + 능동보고 4개 + R시리즈 2개 + Series 3/R 확장 11개)</td></tr>
     </tbody>
   </table>
@@ -295,7 +296,7 @@
 <h2 id="sec1-1">1.1 통신 사양</h2>
 <table class="spec-table">
   <tr><th>항목</th><td>사양</td></tr>
-  <tr><th>통신 방식</th><td>UART RS232 (USB Serial)</td></tr>
+  <tr><th>통신 방식</th><td>UART RS232 (USB Serial / Hardware UART)</td></tr>
   <tr><th>전송 속도</th><td>9600 bps</td></tr>
   <tr><th>데이터 형식</th><td>8N1 (8 data bits, No parity, 1 stop bit)</td></tr>
   <tr><th>바이트 순서</th><td>Big Endian</td></tr>
@@ -319,7 +320,8 @@
 <div class="arch-box">GS805Serial (Public API)
 ├── SerialManager
 │   ├── SerialConnection (interface)
-│   │   └── UsbSerialConnection (USB 구현)
+│   │   ├── UsbSerialConnection (USB 구현)
+│   │   └── UartSerialConnection (Hardware UART 구현)
 │   ├── MessageParser (바이트 → ResponseMessage)
 │   └── ReconnectManager (자동 재연결)
 ├── CommandQueue (순차 명령 큐)
@@ -348,15 +350,15 @@ dependencies {
   <tr><th>항목</th><td>사양</td></tr>
   <tr><th>언어</th><td>Kotlin</td></tr>
   <tr><th>비동기</th><td>Coroutines + Flow</td></tr>
-  <tr><th>USB 시리얼</th><td>usb-serial-for-android v3.7.3</td></tr>
+  <tr><th>시리얼 통신</th><td>USB: usb-serial-for-android v3.7.3 / UART: JNI (termios)</td></tr>
   <tr><th>최소 SDK</th><td>API 21 (Android 5.0)</td></tr>
   <tr><th>빌드</th><td>Gradle KTS, AGP 8.2</td></tr>
 </table>
 
 <!-- ==================== 3. 빠른 시작 ==================== -->
 <h1 id="sec3">3. 빠른 시작</h1>
-<pre><code><span class="cmt">// 1. 인스턴스 생성</span>
-<span class="kw">val</span> gs805 = <span class="type">GS805Serial</span>(context)
+<pre><code><span class="cmt">// 1. 인스턴스 생성 (Hardware UART)</span>
+<span class="kw">val</span> gs805 = <span class="type">GS805Serial</span>(context, connection = <span class="type">UartSerialConnection</span>())
 
 <span class="cmt">// 2. 디바이스 검색 및 연결</span>
 <span class="kw">val</span> devices = gs805.<span class="fn">listDevices</span>()
@@ -390,7 +392,7 @@ gs805.<span class="fn">dispose</span>()</code></pre>
 <table>
   <thead><tr><th style="width:45%">메서드</th><th>설명</th></tr></thead>
   <tbody>
-    <tr><td><code>listDevices()</code></td><td>USB 시리얼 디바이스 목록 반환</td></tr>
+    <tr><td><code>listDevices()</code></td><td>시리얼 디바이스 목록 반환 (USB 또는 UART)</td></tr>
     <tr><td><code>connect(device, config?)</code></td><td>지정 디바이스에 연결</td></tr>
     <tr><td><code>connectToFirstDevice(config?)</code></td><td>검색된 첫 번째 디바이스에 자동 연결</td></tr>
     <tr><td><code>connectByVidPid(vid, pid, config?)</code></td><td>VID/PID를 지정하여 연결</td></tr>
@@ -545,7 +547,7 @@ gs805.<span class="fn">executeChannel</span>(
   <tr><th>항목</th><td>사양</td></tr>
   <tr><th>언어</th><td>Kotlin 1.9+</td></tr>
   <tr><th>비동기 처리</th><td>Kotlin Coroutines + Flow</td></tr>
-  <tr><th>USB 시리얼 라이브러리</th><td>usb-serial-for-android v3.7.3</td></tr>
+  <tr><th>시리얼 라이브러리</th><td>USB: usb-serial-for-android v3.7.3 / UART: JNI (termios)</td></tr>
   <tr><th>최소 Android SDK</th><td>API 21 (Android 5.0 Lollipop)</td></tr>
   <tr><th>빌드 시스템</th><td>Gradle KTS, Android Gradle Plugin 8.2</td></tr>
   <tr><th>통신 프로토콜</th><td>UART RS232, 9600 bps, 8N1, Big Endian</td></tr>

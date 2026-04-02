@@ -254,6 +254,7 @@
   <table>
     <thead><tr><th>버전</th><th>날짜</th><th>내용</th></tr></thead>
     <tbody>
+      <tr><td>0.1.1</td><td>2026-04-02</td><td>Hardware UART 연결 방식 추가</td></tr>
       <tr><td>0.1</td><td>2026-04-01</td><td>초판 작성</td></tr>
     </tbody>
   </table>
@@ -300,7 +301,7 @@
 
 <div class="warn-box">
   <strong>중요:</strong> MDB는 GS805 머신과 <strong>별도 시리얼 포트</strong>를 사용합니다.
-  GS805 제어와 MDB 카드리더 통신은 각각 독립된 USB 시리얼 연결이 필요합니다.
+  GS805 제어와 MDB 카드리더 통신은 각각 독립된 시리얼 연결이 필요합니다. (USB Serial 또는 Hardware UART)
 </div>
 
 <h3>통신 규칙</h3>
@@ -370,7 +371,7 @@ dependencies {
 <table>
   <thead><tr><th style="width:50%">메서드</th><th>설명</th></tr></thead>
   <tbody>
-    <tr><td><code>listDevices(): List&lt;SerialDevice&gt;</code></td><td>USB 시리얼 디바이스 목록</td></tr>
+    <tr><td><code>listDevices(): List&lt;SerialDevice&gt;</code></td><td>시리얼 디바이스 목록 (USB 또는 UART)</td></tr>
     <tr><td><code>suspend connect(device: SerialDevice)</code></td><td>MDB-RS232 브릿지 연결</td></tr>
     <tr><td><code>suspend disconnect()</code></td><td>연결 해제</td></tr>
   </tbody>
@@ -457,7 +458,7 @@ dependencies {
 <h1 id="sec4" class="page-break">4. 결제 플로우</h1>
 
 <h2 id="sec4-1">4.1 기본 결제 플로우</h2>
-<pre><code><span class="kw">val</span> mdb = <span class="type">MdbCashless</span>()
+<pre><code><span class="kw">val</span> mdb = <span class="type">MdbCashless</span>(<span class="type">UartSerialConnection</span>())
 
 <span class="cmt">// 1. MDB 브릿지 연결 (GS805와 별도 포트)</span>
 <span class="kw">val</span> devices = mdb.<span class="fn">listDevices</span>()
@@ -503,8 +504,8 @@ mdb.<span class="fn">sessionComplete</span>()</code></pre>
 
 <h2 id="sec4-3" class="page-break">4.3 GS805 연동: 카드결제 &rarr; 음료제조</h2>
 <pre><code><span class="cmt">// GS805 머신 + MDB 카드리더 동시 운영</span>
-<span class="kw">val</span> gs805 = <span class="type">GS805Serial</span>(context)
-<span class="kw">val</span> mdb = <span class="type">MdbCashless</span>()
+<span class="kw">val</span> gs805 = <span class="type">GS805Serial</span>(context, connection = <span class="type">UartSerialConnection</span>())
+<span class="kw">val</span> mdb = <span class="type">MdbCashless</span>(<span class="type">UartSerialConnection</span>())
 
 <span class="cmt">// 각각 별도 시리얼 포트에 연결</span>
 <span class="kw">val</span> machineDevices = gs805.<span class="fn">listDevices</span>()
@@ -546,8 +547,8 @@ mdb.<span class="fn">enable</span>()
 }</code></pre>
 
 <div class="info-box">
-  <strong>참고:</strong> GS805 머신과 MDB 카드리더는 <strong>별도의 USB 시리얼 포트</strong>를 사용합니다.
-  연결 시 디바이스의 VID/PID로 구분하여 올바른 장치에 연결해야 합니다.
+  <strong>참고:</strong> GS805 머신과 MDB 카드리더는 <strong>별도의 시리얼 포트</strong>를 사용합니다.
+  USB 연결 시 VID/PID로, UART 연결 시 디바이스 경로(/dev/ttyS*)로 구분하여 올바른 장치에 연결해야 합니다.
 </div>
 
 <div class="warn-box">
@@ -655,7 +656,7 @@ mdb.eventFlow.<span class="fn">collect</span> { event ->
   <tr><th>항목</th><td>사양</td></tr>
   <tr><th>프로토콜</th><td>MDB V4.2</td></tr>
   <tr><th>브릿지</th><td>MDB-RS232 (Shanghai Wafer, V2021-V9.2)</td></tr>
-  <tr><th>통신 방식</th><td>UART RS232 (USB Serial)</td></tr>
+  <tr><th>통신 방식</th><td>UART RS232 (USB Serial / Hardware UART)</td></tr>
   <tr><th>전송 속도</th><td>9600 bps</td></tr>
   <tr><th>데이터 형식</th><td>8N1 (8 data bits, No parity, 1 stop bit)</td></tr>
   <tr><th>명령 타임아웃</th><td>200ms</td></tr>
