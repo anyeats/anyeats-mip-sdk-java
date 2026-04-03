@@ -68,6 +68,8 @@ class UartSerialConnection : SerialConnection {
                 Pair("/dev/ttyAMA", 0..15),
                 Pair("/dev/ttyUSB", 0..15),
                 Pair("/dev/ttyACM", 0..15),
+                Pair("/dev/ttyGS", 0..3),
+                Pair("/dev/ttyFIQ", 0..3),
             )
 
             for ((prefix, range) in patterns) {

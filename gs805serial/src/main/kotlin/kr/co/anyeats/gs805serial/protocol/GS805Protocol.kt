@@ -248,7 +248,6 @@ object GS805Protocol {
                 ((subMaterialDuration shr 8) and 0xFF).toByte(), (subMaterialDuration and 0xFF).toByte(),
                 (subMaterialSpeed and 0xFF).toByte(),
                 (endWaitTime and 0xFF).toByte(),
-                (if (removeParamLimits) 0x01 else 0x00).toByte()
             )
         )
     }

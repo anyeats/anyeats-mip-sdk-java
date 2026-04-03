@@ -6,6 +6,11 @@
     <string name="status_disconnected">Disconnected</string>
     <string name="status_connected">Connected: %s</string>
 
+    <!-- Tabs -->
+    <string name="tab_commands">Commands</string>
+    <string name="tab_debug">Debug</string>
+    <string name="tab_system">System</string>
+
     <!-- Section Headers -->
     <string name="section_connection">Connection</string>
     <string name="section_drink">Drink</string>
@@ -20,6 +25,7 @@
     <string name="btn_list_devices">List Devices</string>
     <string name="btn_connect">Connect</string>
     <string name="btn_disconnect">Disconnect</string>
+    <string name="btn_refresh">Refresh</string>
 
     <!-- Drink -->
     <string name="btn_make_drink">Make Drink</string>
@@ -43,11 +49,12 @@
     <string name="btn_clean_all_pipes">Clean All</string>
     <string name="btn_clean_specific_pipe">Clean Pipe 1</string>
     <string name="btn_return_change">Return Change</string>
+    <string name="btn_lock_door">Lock</string>
+    <string name="btn_unlock_door">Unlock</string>
+    <string name="btn_lock_status">Lock Status</string>
 
     <!-- Extended (Series 3/R) -->
     <string name="btn_unit_function_test">Unit Test</string>
-    <string name="btn_lock_door">Lock</string>
-    <string name="btn_unlock_door">Unlock</string>
     <string name="btn_get_lock_status">Lock Status</string>
     <string name="btn_water_refill">Water Refill</string>
     <string name="btn_get_controller_status">Controller</string>
@@ -75,6 +82,17 @@
     <string name="btn_mdb_request_id">Request ID</string>
     <string name="btn_mdb_cash_sale">Cash Sale</string>
 
+    <!-- Debug -->
+    <string name="btn_run">Run</string>
+    <string name="btn_copy">Copy</string>
+    <string name="btn_clear">Clear</string>
+    <string name="hint_shell_command">Shell command...</string>
+
+    <!-- System -->
+    <string name="btn_check_update">Check Update</string>
+    <string name="btn_update_now">Update Now</string>
+
     <!-- Utility -->
     <string name="btn_clear_log">Clear Log</string>
+    <string name="btn_copy_log">Copy Log</string>
 </resources>

@@ -1,20 +1,31 @@
 package kr.co.anyeats.gs805serial.example
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
-import android.widget.Button
-import android.widget.ScrollView
-import android.widget.TextView
+import android.view.View
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kr.co.anyeats.gs805serial.GS805Serial
 import kr.co.anyeats.gs805serial.model.*
 import kr.co.anyeats.gs805serial.serial.SerialDevice
-import kr.co.anyeats.gs805serial.serial.UsbSerialConnection
 import kr.co.anyeats.gs805serial.serial.UartSerialConnection
 import kr.co.anyeats.gs805serial.mdb.MdbCashless
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -22,13 +33,50 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var gs805: GS805Serial
     private lateinit var mdbCashless: MdbCashless
+
+    // Connection bar
+    private lateinit var spinnerDevices: Spinner
+    private lateinit var btnRefreshDevices: Button
+    private lateinit var btnConnect: Button
+    private lateinit var btnDisconnect: Button
     private lateinit var tvStatus: TextView
+
+    // Tabs
+    private lateinit var tabCommands: Button
+    private lateinit var tabDebug: Button
+    private lateinit var tabSystem: Button
+
+    // Panels
+    private lateinit var panelCommands: ScrollView
+    private lateinit var panelDebug: ScrollView
+    private lateinit var panelSystem: ScrollView
+
+    // Log
     private lateinit var tvLog: TextView
     private lateinit var svLog: ScrollView
 
+    // Debug
+    private lateinit var etShellCommand: EditText
+    private lateinit var tvDebugOutput: TextView
+    private val debugLog = StringBuilder()
+
+    // System
+    private lateinit var btnCheckUpdate: Button
+    private lateinit var btnUpdateNow: Button
+    private lateinit var progressUpdate: ProgressBar
+    private lateinit var tvSystemLog: TextView
+
     private var devices: List<SerialDevice> = emptyList()
     private var mdbDevices: List<SerialDevice> = emptyList()
+    private var selectedDeviceIndex = 0
     private val timeFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
+
+    private var updateAvailable = false
+    private var updateApkLink: String = "app-debug.apk"
+
+    companion object {
+        private const val UPDATE_SERVER_URL = "http://192.168.0.140:8000"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,11 +85,11 @@ class MainActivity : AppCompatActivity() {
         gs805 = GS805Serial(this, connection = UartSerialConnection(), enableLogging = true)
         mdbCashless = MdbCashless(UartSerialConnection())
 
-        tvStatus = findViewById(R.id.tvStatus)
-        tvLog = findViewById(R.id.tvLog)
-        svLog = tvLog.parent as ScrollView
-
-        setupConnectionButtons()
+        initViews()
+        setupConnectionBar()
+        setupTabs()
+        setupChannelButtons()
+        setupRecipeMenuButtons()
         setupDrinkButtons()
         setupTemperatureButtons()
         setupInfoButtons()
@@ -49,28 +97,51 @@ class MainActivity : AppCompatActivity() {
         setupExtendedButtons()
         setupRecipeButtons()
         setupMdbButtons()
-        setupUtilButtons()
+        setupDebugPanel()
+        setupSystemPanel()
+        setupLogButtons()
+        loadAppVersion()
         observeEvents()
+
+        // Load devices on start
+        refreshDevices()
     }
 
-    // ========== Connection ==========
+    // ========== Init ==========
 
-    private fun setupConnectionButtons() {
-        findViewById<Button>(R.id.btnListDevices).setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    devices = gs805.listDevices()
-                    appendLog("Found ${devices.size} device(s):")
-                    devices.forEachIndexed { i, d ->
-                        appendLog("  [$i] ${d.name} (VID:${d.vendorId?.toString(16)} PID:${d.productId?.toString(16)})")
-                    }
-                } catch (e: Exception) {
-                    appendLog("ERROR: ${e.message}")
-                }
-            }
-        }
+    private fun initViews() {
+        spinnerDevices = findViewById(R.id.spinnerDevices)
+        btnRefreshDevices = findViewById(R.id.btnRefreshDevices)
+        btnConnect = findViewById(R.id.btnConnect)
+        btnDisconnect = findViewById(R.id.btnDisconnect)
+        tvStatus = findViewById(R.id.tvStatus)
 
-        findViewById<Button>(R.id.btnConnect).setOnClickListener {
+        tabCommands = findViewById(R.id.tabCommands)
+        tabDebug = findViewById(R.id.tabDebug)
+        tabSystem = findViewById(R.id.tabSystem)
+
+        panelCommands = findViewById(R.id.panelCommands)
+        panelDebug = findViewById(R.id.panelDebug)
+        panelSystem = findViewById(R.id.panelSystem)
+
+        tvLog = findViewById(R.id.tvLog)
+        svLog = tvLog.parent as ScrollView
+
+        etShellCommand = findViewById(R.id.etShellCommand)
+        tvDebugOutput = findViewById(R.id.tvDebugOutput)
+
+        btnCheckUpdate = findViewById(R.id.btnCheckUpdate)
+        btnUpdateNow = findViewById(R.id.btnUpdateNow)
+        progressUpdate = findViewById(R.id.progressUpdate)
+        tvSystemLog = findViewById(R.id.tvSystemLog)
+    }
+
+    // ========== Connection Bar ==========
+
+    private fun setupConnectionBar() {
+        btnRefreshDevices.setOnClickListener { refreshDevices() }
+
+        btnConnect.setOnClickListener {
             lifecycleScope.launch {
                 try {
                     if (devices.isEmpty()) {
@@ -80,21 +151,299 @@ class MainActivity : AppCompatActivity() {
                         appendLog("No devices found")
                         return@launch
                     }
-                    gs805.connect(devices.first())
-                    appendLog("Connected to ${devices.first().name}")
-                    updateStatus()
+                    val device = devices[selectedDeviceIndex]
+                    gs805.connect(device)
+                    appendLog("Connected to ${device.name}")
+                    updateConnectionUI()
                 } catch (e: Exception) {
                     appendLog("ERROR: ${e.message}")
                 }
             }
         }
 
-        findViewById<Button>(R.id.btnDisconnect).setOnClickListener {
+        btnDisconnect.setOnClickListener {
             lifecycleScope.launch {
                 try {
                     gs805.disconnect()
                     appendLog("Disconnected")
-                    updateStatus()
+                    updateConnectionUI()
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        spinnerDevices.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                selectedDeviceIndex = position
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+    }
+
+    private fun refreshDevices() {
+        lifecycleScope.launch {
+            try {
+                devices = gs805.listDevices()
+                val names = devices.map { "${it.name} (${it.vendorId?.toString(16) ?: "uart"})" }
+                val adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_item, names)
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                spinnerDevices.adapter = adapter
+                // Default to ttyS7
+                val ttyS7Index = devices.indexOfFirst { it.name.contains("ttyS7") }
+                if (ttyS7Index >= 0) {
+                    spinnerDevices.setSelection(ttyS7Index)
+                    selectedDeviceIndex = ttyS7Index
+                }
+                appendLog("Found ${devices.size} device(s)")
+            } catch (e: Exception) {
+                appendLog("ERROR listing devices: ${e.message}")
+            }
+        }
+    }
+
+    private fun updateConnectionUI() {
+        runOnUiThread {
+            if (gs805.isConnected) {
+                btnConnect.visibility = View.GONE
+                btnDisconnect.visibility = View.VISIBLE
+                btnRefreshDevices.isEnabled = false
+                spinnerDevices.isEnabled = false
+                tvStatus.text = getString(R.string.status_connected, gs805.connectedDevice?.name ?: "Unknown")
+                tvStatus.setTextColor(Color.parseColor("#2E7D32"))
+                findViewById<LinearLayout>(R.id.connectionBar).setBackgroundColor(Color.parseColor("#E8F5E9"))
+            } else {
+                btnConnect.visibility = View.VISIBLE
+                btnDisconnect.visibility = View.GONE
+                btnRefreshDevices.isEnabled = true
+                spinnerDevices.isEnabled = true
+                tvStatus.text = getString(R.string.status_disconnected)
+                tvStatus.setTextColor(Color.parseColor("#757575"))
+                findViewById<LinearLayout>(R.id.connectionBar).setBackgroundColor(Color.parseColor("#E3F2FD"))
+            }
+        }
+    }
+
+    // ========== Tabs ==========
+
+    private fun setupTabs() {
+        selectTab(0) // Commands by default
+
+        tabCommands.setOnClickListener { selectTab(0) }
+        tabDebug.setOnClickListener { selectTab(1) }
+        tabSystem.setOnClickListener { selectTab(2) }
+    }
+
+    private fun selectTab(index: Int) {
+        val tabs = listOf(tabCommands, tabDebug, tabSystem)
+        val panels = listOf(panelCommands, panelDebug, panelSystem)
+
+        tabs.forEachIndexed { i, tab ->
+            if (i == index) {
+                tab.setBackgroundColor(Color.parseColor("#1976D2"))
+                tab.setTextColor(Color.WHITE)
+                tab.typeface = Typeface.DEFAULT_BOLD
+            } else {
+                tab.setBackgroundColor(Color.TRANSPARENT)
+                tab.setTextColor(Color.parseColor("#1976D2"))
+                tab.typeface = Typeface.DEFAULT
+            }
+        }
+
+        panels.forEachIndexed { i, panel ->
+            panel.visibility = if (i == index) View.VISIBLE else View.GONE
+        }
+    }
+
+    // ========== Channel (0x25) ==========
+
+    private fun setupChannelButtons() {
+        // Hot Make 1: ch0 only
+        findViewById<Button>(R.id.btnChHotMake1).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    appendLog("Channel: Hot Make 1 (ch0)")
+                    gs805.executeChannel(channel = 0, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 0)
+                    appendLog("Channel: Hot Make 1 done")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        // Hot Make 1&2: ch0 then ch1
+        findViewById<Button>(R.id.btnChHotMake12).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    appendLog("Channel: Hot Make 1&2 (ch0->ch1)")
+                    gs805.executeChannel(channel = 0, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0)
+                    gs805.executeChannel(channel = 1, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
+                    appendLog("Channel: Hot Make 1&2 done")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        // Hot Make 3&2: ch2 then ch1
+        findViewById<Button>(R.id.btnChHotMake32).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    appendLog("Channel: Hot Make 3&2 (ch2->ch1)")
+                    gs805.executeChannel(channel = 2, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0)
+                    gs805.executeChannel(channel = 1, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
+                    appendLog("Channel: Hot Make 3&2 done")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        // Cold Make 1: ch0 only
+        findViewById<Button>(R.id.btnChColdMake1).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    appendLog("Channel: Cold Make 1 (ch0)")
+                    gs805.executeChannel(channel = 0, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 0)
+                    appendLog("Channel: Cold Make 1 done")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        // Cold Make 1&2: ch0 then ch1
+        findViewById<Button>(R.id.btnChColdMake12).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    appendLog("Channel: Cold Make 1&2 (ch0->ch1)")
+                    gs805.executeChannel(channel = 0, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0)
+                    gs805.executeChannel(channel = 1, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
+                    appendLog("Channel: Cold Make 1&2 done")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        // Cold Make 3&2: ch2 then ch1
+        findViewById<Button>(R.id.btnChColdMake32).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    appendLog("Channel: Cold Make 3&2 (ch2->ch1)")
+                    gs805.executeChannel(channel = 2, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0)
+                    gs805.executeChannel(channel = 1, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
+                    appendLog("Channel: Cold Make 3&2 done")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+    }
+
+    // ========== Recipe Menu (0x1D) ==========
+
+    private fun setupRecipeMenuButtons() {
+        // Hot Make 1: recipe with ch0 only
+        findViewById<Button>(R.id.btnRecHotMake1).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    appendLog("Recipe: Hot Make 1 (ch0)")
+                    val steps = listOf(
+                        RecipeStep.instantChannel(channel = 0, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 0)
+                    )
+                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, steps)
+                    gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
+                    appendLog("Recipe: Hot Make 1 done")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        // Hot Make 1&2: recipe with ch0, ch1
+        findViewById<Button>(R.id.btnRecHotMake12).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    appendLog("Recipe: Hot Make 1&2 (ch0->ch1)")
+                    val steps = listOf(
+                        RecipeStep.instantChannel(channel = 0, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0),
+                        RecipeStep.instantChannel(channel = 1, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
+                    )
+                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, steps)
+                    gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
+                    appendLog("Recipe: Hot Make 1&2 done")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        // Hot Make 3&2: recipe with ch2, ch1
+        findViewById<Button>(R.id.btnRecHotMake32).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    appendLog("Recipe: Hot Make 3&2 (ch2->ch1)")
+                    val steps = listOf(
+                        RecipeStep.instantChannel(channel = 2, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0),
+                        RecipeStep.instantChannel(channel = 1, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
+                    )
+                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, steps)
+                    gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
+                    appendLog("Recipe: Hot Make 3&2 done")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        // Cold Make 1: recipe with ch0 only
+        findViewById<Button>(R.id.btnRecColdMake1).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    appendLog("Recipe: Cold Make 1 (ch0)")
+                    val steps = listOf(
+                        RecipeStep.instantChannel(channel = 0, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 0)
+                    )
+                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, steps)
+                    gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
+                    appendLog("Recipe: Cold Make 1 done")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        // Cold Make 1&2: recipe with ch0, ch1
+        findViewById<Button>(R.id.btnRecColdMake12).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    appendLog("Recipe: Cold Make 1&2 (ch0->ch1)")
+                    val steps = listOf(
+                        RecipeStep.instantChannel(channel = 0, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0),
+                        RecipeStep.instantChannel(channel = 1, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
+                    )
+                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, steps)
+                    gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
+                    appendLog("Recipe: Cold Make 1&2 done")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        // Cold Make 3&2: recipe with ch2, ch1
+        findViewById<Button>(R.id.btnRecColdMake32).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    appendLog("Recipe: Cold Make 3&2 (ch2->ch1)")
+                    val steps = listOf(
+                        RecipeStep.instantChannel(channel = 2, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0),
+                        RecipeStep.instantChannel(channel = 1, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
+                    )
+                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, steps)
+                    gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
+                    appendLog("Recipe: Cold Make 3&2 done")
                 } catch (e: Exception) {
                     appendLog("ERROR: ${e.message}")
                 }
@@ -147,7 +496,7 @@ class MainActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 try {
                     gs805.setHotTemperature(90, 70)
-                    appendLog("Hot temperature set: 70-90°C")
+                    appendLog("Hot temperature set: 70-90C")
                 } catch (e: Exception) {
                     appendLog("ERROR: ${e.message}")
                 }
@@ -158,7 +507,7 @@ class MainActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 try {
                     gs805.setColdTemperature(10, 5)
-                    appendLog("Cold temperature set: 5-10°C")
+                    appendLog("Cold temperature set: 5-10C")
                 } catch (e: Exception) {
                     appendLog("ERROR: ${e.message}")
                 }
@@ -219,6 +568,29 @@ class MainActivity : AppCompatActivity() {
     // ========== Maintenance ==========
 
     private fun setupMaintenanceButtons() {
+        // Pickup Door (cup delivery)
+        findViewById<Button>(R.id.btnDoorOpen30).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    gs805.cupDelivery(30)
+                    appendLog("Door opened (30s wait)")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        findViewById<Button>(R.id.btnDoorOpen60).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    gs805.cupDelivery(60)
+                    appendLog("Door opened (60s wait)")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
         findViewById<Button>(R.id.btnSetCupDropMode).setOnClickListener {
             lifecycleScope.launch {
                 try {
@@ -284,6 +656,42 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        // Front Door Open
+        findViewById<Button>(R.id.btnLockDoor).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    gs805.unitFunctionTest(3, 1, 0, 0)
+                    appendLog("Door test: open (3,1,0,0)")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        // Front Door Close
+        findViewById<Button>(R.id.btnUnlockDoor).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    gs805.unitFunctionTest(3, 0, 0, 0)
+                    appendLog("Door test: close (3,0,0,0)")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
+
+        // Front Door Test
+        findViewById<Button>(R.id.btnGetLockStatusMaint).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    gs805.unitFunctionTest(3, 2, 0, 0)
+                    appendLog("Door test: (3,2,0,0)")
+                } catch (e: Exception) {
+                    appendLog("ERROR: ${e.message}")
+                }
+            }
+        }
     }
 
     // ========== Extended (Series 3/R) ==========
@@ -294,28 +702,6 @@ class MainActivity : AppCompatActivity() {
                 try {
                     gs805.unitFunctionTest(testCmd = 1, data1 = 0, data2 = 0, data3 = 0)
                     appendLog("Unit function test (dispensing) sent")
-                } catch (e: Exception) {
-                    appendLog("ERROR: ${e.message}")
-                }
-            }
-        }
-
-        findViewById<Button>(R.id.btnLockDoor).setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    val status = gs805.lockDoor(lockNumber = 1)
-                    appendLog("Lock door: $status")
-                } catch (e: Exception) {
-                    appendLog("ERROR: ${e.message}")
-                }
-            }
-        }
-
-        findViewById<Button>(R.id.btnUnlockDoor).setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    val status = gs805.unlockDoor(lockNumber = 1)
-                    appendLog("Unlock door: $status")
                 } catch (e: Exception) {
                     appendLog("ERROR: ${e.message}")
                 }
@@ -599,11 +985,234 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ========== Utility ==========
+    // ========== Debug Panel ==========
 
-    private fun setupUtilButtons() {
+    private fun setupDebugPanel() {
+        val presetCommands = mapOf(
+            R.id.btnPreset1 to "su 0 am force-stop com.yj.coffeemachines",
+            R.id.btnPreset2 to "su 0 sh -c \"timeout 15 cat /dev/ttyS7 > /data/local/tmp/ttyS7.bin &\"",
+            R.id.btnPreset3 to "su 0 am start -n com.yj.coffeemachines/.MainActivity",
+            R.id.btnPreset4 to "su 0 xxd /data/local/tmp/ttyS7.bin",
+            R.id.btnPreset5 to "su 0 sh -c \"echo AA55020B0C | xxd -r -p > /dev/ttyS7 & timeout 1 cat /dev/ttyS7 | xxd\""
+        )
+
+        presetCommands.forEach { (id, cmd) ->
+            findViewById<Button>(id).setOnClickListener {
+                etShellCommand.setText(cmd)
+                runShellCommand(cmd)
+            }
+        }
+
+        findViewById<Button>(R.id.btnRunShell).setOnClickListener {
+            val cmd = etShellCommand.text.toString().trim()
+            if (cmd.isNotEmpty()) {
+                runShellCommand(cmd)
+            }
+        }
+
+        findViewById<Button>(R.id.btnCopyDebug).setOnClickListener {
+            copyToClipboard(debugLog.toString())
+            showToast("Debug output copied")
+        }
+
+        findViewById<Button>(R.id.btnClearDebug).setOnClickListener {
+            debugLog.clear()
+            tvDebugOutput.text = ""
+        }
+    }
+
+    private fun runShellCommand(command: String) {
+        lifecycleScope.launch {
+            appendDebug("$ $command")
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    executeShellCommand(command)
+                }
+                appendDebug(result)
+            } catch (e: Exception) {
+                appendDebug("ERROR: ${e.message}")
+            }
+        }
+    }
+
+    private fun executeShellCommand(command: String): String {
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("sh", "-c", command))
+            val stdout = BufferedReader(InputStreamReader(process.inputStream)).readText().trim()
+            val stderr = BufferedReader(InputStreamReader(process.errorStream)).readText().trim()
+            process.waitFor()
+
+            buildString {
+                if (stdout.isNotEmpty()) append(stdout)
+                if (stderr.isNotEmpty()) {
+                    if (isNotEmpty()) append("\n")
+                    append("[err] $stderr")
+                }
+                if (isEmpty()) append("(no output)")
+            }
+        } catch (e: Exception) {
+            "EXEC ERROR: ${e.message}"
+        }
+    }
+
+    private fun appendDebug(text: String) {
+        runOnUiThread {
+            debugLog.append(text).append("\n")
+            tvDebugOutput.text = debugLog.toString()
+        }
+    }
+
+    // ========== System Panel ==========
+
+    private fun setupSystemPanel() {
+        btnCheckUpdate.setOnClickListener { checkForUpdate() }
+        btnUpdateNow.setOnClickListener { downloadAndInstall() }
+    }
+
+    private fun checkForUpdate() {
+        lifecycleScope.launch {
+            progressUpdate.visibility = View.VISIBLE
+            btnCheckUpdate.isEnabled = false
+            tvSystemLog.text = "Checking for update..."
+
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    val url = URL("$UPDATE_SERVER_URL/")
+                    val conn = url.openConnection() as HttpURLConnection
+                    conn.connectTimeout = 3000
+                    conn.readTimeout = 5000
+                    conn.requestMethod = "GET"
+                    try {
+                        val body = conn.inputStream.bufferedReader().readText()
+                        body
+                    } finally {
+                        conn.disconnect()
+                    }
+                }
+
+                if (result.contains("app-debug.apk")) {
+                    updateAvailable = true
+                    // Extract href link if present
+                    val hrefRegex = Regex("""href="([^"]*app-debug\.apk[^"]*)")""")
+                    val match = hrefRegex.find(result)
+                    updateApkLink = match?.groupValues?.get(1) ?: "app-debug.apk"
+                    btnUpdateNow.visibility = View.VISIBLE
+                    tvSystemLog.text = "Update available: $updateApkLink"
+                } else {
+                    updateAvailable = false
+                    btnUpdateNow.visibility = View.GONE
+                    tvSystemLog.text = "No update found on server\n\nResponse:\n$result"
+                }
+            } catch (e: Exception) {
+                updateAvailable = false
+                btnUpdateNow.visibility = View.GONE
+                tvSystemLog.text = "Server unreachable: ${e.message}"
+            } finally {
+                progressUpdate.visibility = View.GONE
+                btnCheckUpdate.isEnabled = true
+            }
+        }
+    }
+
+    private fun downloadAndInstall() {
+        lifecycleScope.launch {
+            progressUpdate.visibility = View.VISIBLE
+            btnUpdateNow.isEnabled = false
+            tvSystemLog.text = "Downloading APK..."
+
+            try {
+                // Download using HttpURLConnection
+                val downloadPath = "/sdcard/Download/update.apk"
+                withContext(Dispatchers.IO) {
+                    val url = URL("$UPDATE_SERVER_URL/$updateApkLink")
+                    val conn = url.openConnection() as HttpURLConnection
+                    conn.connectTimeout = 5000
+                    conn.readTimeout = 30000
+                    conn.requestMethod = "GET"
+                    try {
+                        val inputStream = conn.inputStream
+                        val file = File(downloadPath)
+                        FileOutputStream(file).use { fos ->
+                            inputStream.copyTo(fos)
+                        }
+                    } finally {
+                        conn.disconnect()
+                    }
+                }
+
+                tvSystemLog.text = "Download complete. Ready to install."
+
+                // Show dialog before install
+                runOnUiThread {
+                    android.app.AlertDialog.Builder(this@MainActivity)
+                        .setTitle("Update Downloaded")
+                        .setMessage("Install and restart now?\n\nThe app will close and reopen automatically.")
+                        .setNegativeButton("Later") { dialog, _ -> dialog.dismiss() }
+                        .setPositiveButton("Install & Restart") { _, _ ->
+                            lifecycleScope.launch {
+                                tvSystemLog.text = "Installing..."
+                                // 1. Write restart script
+                                withContext(Dispatchers.IO) {
+                                    executeShellCommand("su 0 sh -c \"echo '#!/system/bin/sh\nsleep 10\nam start -n kr.co.anyeats.gs805serial.example/.MainActivity' > /data/local/tmp/restart.sh && chmod 755 /data/local/tmp/restart.sh\"")
+                                }
+                                // 2. Launch as independent daemon
+                                withContext(Dispatchers.IO) {
+                                    executeShellCommand("su 0 setsid sh /data/local/tmp/restart.sh < /dev/null > /dev/null 2>&1 &")
+                                }
+                                kotlinx.coroutines.delay(1000)
+                                // 3. Install (kills the app)
+                                withContext(Dispatchers.IO) {
+                                    executeShellCommand("su 0 pm install -r $downloadPath 2>&1")
+                                }
+                            }
+                        }
+                        .setCancelable(false)
+                        .show()
+                }
+            } catch (e: Exception) {
+                tvSystemLog.text = "Update failed: ${e.message}"
+            } finally {
+                progressUpdate.visibility = View.GONE
+                btnUpdateNow.isEnabled = true
+            }
+        }
+    }
+
+    // ========== Log ==========
+
+    private fun setupLogButtons() {
         findViewById<Button>(R.id.btnClearLog).setOnClickListener {
             tvLog.text = ""
+        }
+
+        findViewById<Button>(R.id.btnCopyLog).setOnClickListener {
+            copyToClipboard(tvLog.text.toString())
+            showToast("Log copied")
+        }
+
+        // Long-click on log to copy
+        tvLog.setOnLongClickListener {
+            copyToClipboard(tvLog.text.toString())
+            showToast("Log copied")
+            true
+        }
+    }
+
+    // ========== Version ==========
+
+    private fun loadAppVersion() {
+        try {
+            val pInfo = packageManager.getPackageInfo(packageName, 0)
+            val versionName = pInfo.versionName ?: ""
+            val versionCode = if (android.os.Build.VERSION.SDK_INT >= 28) {
+                pInfo.longVersionCode
+            } else {
+                @Suppress("DEPRECATION")
+                pInfo.versionCode.toLong()
+            }
+            title = "GS805 Coffee Machine  v$versionName ($versionCode)"
+        } catch (_: Exception) {
+            title = "GS805 Coffee Machine"
         }
     }
 
@@ -611,7 +1220,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun observeEvents() {
         gs805.connectionStateFlow
-            .onEach { updateStatus() }
+            .onEach { updateConnectionUI() }
             .launchIn(lifecycleScope)
 
         gs805.eventFlow
@@ -631,15 +1240,7 @@ class MainActivity : AppCompatActivity() {
             .launchIn(lifecycleScope)
     }
 
-    private fun updateStatus() {
-        runOnUiThread {
-            tvStatus.text = if (gs805.isConnected) {
-                getString(R.string.status_connected, gs805.connectedDevice?.name ?: "Unknown")
-            } else {
-                getString(R.string.status_disconnected)
-            }
-        }
-    }
+    // ========== Utilities ==========
 
     private fun appendLog(message: String) {
         runOnUiThread {
@@ -647,6 +1248,16 @@ class MainActivity : AppCompatActivity() {
             tvLog.append("[$timestamp] $message\n")
             svLog.post { svLog.fullScroll(ScrollView.FOCUS_DOWN) }
         }
+    }
+
+    private fun copyToClipboard(text: String) {
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("GS805 Log", text)
+        clipboard.setPrimaryClip(clip)
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroy() {

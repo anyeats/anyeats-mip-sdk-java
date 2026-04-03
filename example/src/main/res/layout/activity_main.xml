@@ -2,473 +2,878 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tvStatus"
+    <!-- ===== Connection Bar ===== -->
+    <LinearLayout
+        android:id="@+id/connectionBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/status_disconnected"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:padding="8dp"
-        android:background="#E3F2FD"
-        android:layout_marginBottom="8dp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="4dp"
+        android:background="#E3F2FD">
 
-    <ScrollView
+        <Spinner
+            android:id="@+id/spinnerDevices"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnRefreshDevices"
+            style="@style/BtnStyleSmall"
+            android:text="@string/btn_refresh" />
+
+        <Button
+            android:id="@+id/btnConnect"
+            style="@style/BtnStyleSmall"
+            android:layout_marginStart="4dp"
+            android:text="@string/btn_connect" />
+
+        <Button
+            android:id="@+id/btnDisconnect"
+            style="@style/BtnStyleSmall"
+            android:layout_marginStart="4dp"
+            android:text="@string/btn_disconnect"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/status_disconnected"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:layout_marginStart="8dp"
+            android:maxWidth="120dp"
+            android:ellipsize="end"
+            android:maxLines="1" />
+    </LinearLayout>
+
+    <!-- ===== Tab Row ===== -->
+    <HorizontalScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginBottom="4dp">
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:background="#F5F5F5">
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:id="@+id/tabRow"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <!-- ===== Connection ===== -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/section_connection"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#1565C0"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnListDevices"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_list_devices" />
-
-                <Button
-                    android:id="@+id/btnConnect"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_connect" />
-
-                <Button
-                    android:id="@+id/btnDisconnect"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_disconnect" />
-            </LinearLayout>
-
-            <!-- ===== Drink ===== -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/section_drink"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#1565C0"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnMakeDrink"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_make_drink" />
-
-                <Button
-                    android:id="@+id/btnSetDrinkPrice"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_set_drink_price" />
-
-                <Button
-                    android:id="@+id/btnGetSalesCount"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_get_sales_count" />
-            </LinearLayout>
-
-            <!-- ===== Temperature ===== -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/section_temperature"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#1565C0"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnSetHotTemp"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_set_hot_temp" />
-
-                <Button
-                    android:id="@+id/btnSetColdTemp"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_set_cold_temp" />
-            </LinearLayout>
-
-            <!-- ===== Info ===== -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/section_info"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#1565C0"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnGetStatus"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_get_status" />
-
-                <Button
-                    android:id="@+id/btnGetError"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_get_error" />
-
-                <Button
-                    android:id="@+id/btnGetErrorCode"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_get_error_code" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnGetBalance"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_get_balance" />
-            </LinearLayout>
-
-            <!-- ===== Maintenance ===== -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/section_maintenance"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#1565C0"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnSetCupDropMode"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_set_cup_drop_mode" />
-
-                <Button
-                    android:id="@+id/btnTestCupDrop"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_test_cup_drop" />
-
-                <Button
-                    android:id="@+id/btnAutoInspection"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_auto_inspection" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnCleanAllPipes"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_clean_all_pipes" />
-
-                <Button
-                    android:id="@+id/btnCleanSpecificPipe"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_clean_specific_pipe" />
-
-                <Button
-                    android:id="@+id/btnReturnChange"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_return_change" />
-            </LinearLayout>
-
-            <!-- ===== Extended (Series 3/R) ===== -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/section_extended"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#1565C0"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnUnitFunctionTest"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_unit_function_test" />
-
-                <Button
-                    android:id="@+id/btnLockDoor"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_lock_door" />
-
-                <Button
-                    android:id="@+id/btnUnlockDoor"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_unlock_door" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnGetLockStatus"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_get_lock_status" />
-
-                <Button
-                    android:id="@+id/btnWaterRefill"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_water_refill" />
-
-                <Button
-                    android:id="@+id/btnGetControllerStatus"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_get_controller_status" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnGetDrinkStatus"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_get_drink_status" />
-
-                <Button
-                    android:id="@+id/btnGetObjectException"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_get_object_exception" />
-
-                <Button
-                    android:id="@+id/btnForceStopDrink"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_force_stop_drink" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnForceStopCup"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_force_stop_cup" />
-
-                <Button
-                    android:id="@+id/btnCupDelivery"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_cup_delivery" />
-            </LinearLayout>
-
-            <!-- ===== Recipe (R-Series) ===== -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/section_recipe"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#1565C0"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnSetRecipe"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_set_recipe" />
-
-                <Button
-                    android:id="@+id/btnExecuteChannel"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_execute_channel" />
-            </LinearLayout>
-
-            <!-- ===== MDB Payment ===== -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/section_mdb"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#1565C0"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnMdbListDevices"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_mdb_list_devices" />
-
-                <Button
-                    android:id="@+id/btnMdbConnect"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_mdb_connect" />
-
-                <Button
-                    android:id="@+id/btnMdbDisconnect"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_mdb_disconnect" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnMdbSetup"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_mdb_setup" />
-
-                <Button
-                    android:id="@+id/btnMdbEnable"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_mdb_enable" />
-
-                <Button
-                    android:id="@+id/btnMdbDisable"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_mdb_disable" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnMdbRequestVend"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_mdb_request_vend" />
-
-                <Button
-                    android:id="@+id/btnMdbVendSuccess"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_mdb_vend_success" />
-
-                <Button
-                    android:id="@+id/btnMdbVendCancel"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_mdb_vend_cancel" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <Button
-                    android:id="@+id/btnMdbSessionComplete"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_mdb_session_complete" />
-
-                <Button
-                    android:id="@+id/btnMdbRequestId"
-                    style="@style/BtnStyle"
-                    android:text="@string/btn_mdb_request_id" />
-
-                <Button
-                    android:id="@+id/btnMdbCashSale"
-                    style="@style/BtnStyle"
-                    android:layout_marginEnd="0dp"
-                    android:text="@string/btn_mdb_cash_sale" />
-            </LinearLayout>
-
+            android:orientation="horizontal"
+            android:padding="4dp">
+
+            <Button
+                android:id="@+id/tabCommands"
+                style="@style/TabStyle"
+                android:text="@string/tab_commands"
+                android:layout_marginEnd="4dp" />
+
+            <Button
+                android:id="@+id/tabDebug"
+                style="@style/TabStyle"
+                android:text="@string/tab_debug"
+                android:layout_marginEnd="4dp" />
+
+            <Button
+                android:id="@+id/tabSystem"
+                style="@style/TabStyle"
+                android:text="@string/tab_system" />
         </LinearLayout>
-    </ScrollView>
+    </HorizontalScrollView>
+
+    <!-- ===== Content Area ===== -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- ===== Commands Tab ===== -->
+        <ScrollView
+            android:id="@+id/panelCommands"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- ===== Channel (0x25) ===== -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Channel (0x25)"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnChHotMake1"
+                        style="@style/BtnStyle"
+                        android:text="Hot 1" />
+
+                    <Button
+                        android:id="@+id/btnChHotMake12"
+                        style="@style/BtnStyle"
+                        android:text="Hot 1&amp;2" />
+
+                    <Button
+                        android:id="@+id/btnChHotMake32"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="Hot 3&amp;2" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnChColdMake1"
+                        style="@style/BtnStyle"
+                        android:text="Cold 1" />
+
+                    <Button
+                        android:id="@+id/btnChColdMake12"
+                        style="@style/BtnStyle"
+                        android:text="Cold 1&amp;2" />
+
+                    <Button
+                        android:id="@+id/btnChColdMake32"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="Cold 3&amp;2" />
+                </LinearLayout>
+
+                <!-- ===== Recipe (0x1D) ===== -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Recipe (0x1D)"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnRecHotMake1"
+                        style="@style/BtnStyle"
+                        android:text="Hot 1" />
+
+                    <Button
+                        android:id="@+id/btnRecHotMake12"
+                        style="@style/BtnStyle"
+                        android:text="Hot 1&amp;2" />
+
+                    <Button
+                        android:id="@+id/btnRecHotMake32"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="Hot 3&amp;2" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnRecColdMake1"
+                        style="@style/BtnStyle"
+                        android:text="Cold 1" />
+
+                    <Button
+                        android:id="@+id/btnRecColdMake12"
+                        style="@style/BtnStyle"
+                        android:text="Cold 1&amp;2" />
+
+                    <Button
+                        android:id="@+id/btnRecColdMake32"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="Cold 3&amp;2" />
+                </LinearLayout>
+
+                <!-- ===== Drink ===== -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/section_drink"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnMakeDrink"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_make_drink" />
+
+                    <Button
+                        android:id="@+id/btnSetDrinkPrice"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_set_drink_price" />
+
+                    <Button
+                        android:id="@+id/btnGetSalesCount"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_get_sales_count" />
+                </LinearLayout>
+
+                <!-- ===== Temperature ===== -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/section_temperature"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnSetHotTemp"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_set_hot_temp" />
+
+                    <Button
+                        android:id="@+id/btnSetColdTemp"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_set_cold_temp" />
+                </LinearLayout>
+
+                <!-- ===== Info ===== -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/section_info"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnGetStatus"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_get_status" />
+
+                    <Button
+                        android:id="@+id/btnGetError"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_get_error" />
+
+                    <Button
+                        android:id="@+id/btnGetErrorCode"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_get_error_code" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnGetBalance"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_get_balance" />
+                </LinearLayout>
+
+                <!-- ===== Maintenance ===== -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/section_maintenance"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp" />
+
+                <!-- Pickup Door (cup delivery) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnDoorOpen30"
+                        style="@style/BtnStyle"
+                        android:text="Open 30s" />
+
+                    <Button
+                        android:id="@+id/btnDoorOpen60"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="Open 60s" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnSetCupDropMode"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_set_cup_drop_mode" />
+
+                    <Button
+                        android:id="@+id/btnTestCupDrop"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_test_cup_drop" />
+
+                    <Button
+                        android:id="@+id/btnAutoInspection"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_auto_inspection" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnCleanAllPipes"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_clean_all_pipes" />
+
+                    <Button
+                        android:id="@+id/btnCleanSpecificPipe"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_clean_specific_pipe" />
+
+                    <Button
+                        android:id="@+id/btnReturnChange"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_return_change" />
+                </LinearLayout>
+
+                <!-- Front Door Control (0x1A testCmd=3) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnLockDoor"
+                        style="@style/BtnStyle"
+                        android:text="Door Open" />
+
+                    <Button
+                        android:id="@+id/btnUnlockDoor"
+                        style="@style/BtnStyle"
+                        android:text="Door Close" />
+
+                    <Button
+                        android:id="@+id/btnGetLockStatusMaint"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="Door Test" />
+                </LinearLayout>
+
+                <!-- ===== Extended (Series 3/R) ===== -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/section_extended"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnUnitFunctionTest"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_unit_function_test" />
+
+                    <Button
+                        android:id="@+id/btnGetLockStatus"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_get_lock_status" />
+
+                    <Button
+                        android:id="@+id/btnWaterRefill"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_water_refill" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnGetControllerStatus"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_get_controller_status" />
+
+                    <Button
+                        android:id="@+id/btnGetDrinkStatus"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_get_drink_status" />
+
+                    <Button
+                        android:id="@+id/btnGetObjectException"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_get_object_exception" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnForceStopDrink"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_force_stop_drink" />
+
+                    <Button
+                        android:id="@+id/btnForceStopCup"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_force_stop_cup" />
+
+                    <Button
+                        android:id="@+id/btnCupDelivery"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_cup_delivery" />
+                </LinearLayout>
+
+                <!-- ===== Recipe (R-Series) ===== -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/section_recipe"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnSetRecipe"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_set_recipe" />
+
+                    <Button
+                        android:id="@+id/btnExecuteChannel"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_execute_channel" />
+                </LinearLayout>
+
+                <!-- ===== MDB Payment ===== -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/section_mdb"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnMdbListDevices"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_mdb_list_devices" />
+
+                    <Button
+                        android:id="@+id/btnMdbConnect"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_mdb_connect" />
+
+                    <Button
+                        android:id="@+id/btnMdbDisconnect"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_mdb_disconnect" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnMdbSetup"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_mdb_setup" />
+
+                    <Button
+                        android:id="@+id/btnMdbEnable"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_mdb_enable" />
+
+                    <Button
+                        android:id="@+id/btnMdbDisable"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_mdb_disable" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnMdbRequestVend"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_mdb_request_vend" />
+
+                    <Button
+                        android:id="@+id/btnMdbVendSuccess"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_mdb_vend_success" />
+
+                    <Button
+                        android:id="@+id/btnMdbVendCancel"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_mdb_vend_cancel" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnMdbSessionComplete"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_mdb_session_complete" />
+
+                    <Button
+                        android:id="@+id/btnMdbRequestId"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_mdb_request_id" />
+
+                    <Button
+                        android:id="@+id/btnMdbCashSale"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="@string/btn_mdb_cash_sale" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- ===== Debug Tab ===== -->
+        <ScrollView
+            android:id="@+id/panelDebug"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Shell Command Input -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Shell Command"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0"
+                    android:layout_marginBottom="4dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <EditText
+                        android:id="@+id/etShellCommand"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        android:hint="@string/hint_shell_command"
+                        android:textSize="12sp"
+                        android:fontFamily="monospace"
+                        android:inputType="text"
+                        android:padding="8dp"
+                        android:background="@android:drawable/edit_text"
+                        android:layout_marginEnd="4dp" />
+
+                    <Button
+                        android:id="@+id/btnRunShell"
+                        style="@style/BtnStyleSmall"
+                        android:text="@string/btn_run" />
+                </LinearLayout>
+
+                <!-- Preset Buttons -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Presets"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#666666"
+                    android:layout_marginBottom="4dp" />
+
+                <Button
+                    android:id="@+id/btnPreset1"
+                    style="@style/BtnStyleSmall"
+                    android:text="force-stop coffeemachines"
+                    android:layout_marginBottom="2dp" />
+
+                <Button
+                    android:id="@+id/btnPreset2"
+                    style="@style/BtnStyleSmall"
+                    android:text="cat ttyS7 > bin"
+                    android:layout_marginBottom="2dp" />
+
+                <Button
+                    android:id="@+id/btnPreset3"
+                    style="@style/BtnStyleSmall"
+                    android:text="start coffeemachines"
+                    android:layout_marginBottom="2dp" />
+
+                <Button
+                    android:id="@+id/btnPreset4"
+                    style="@style/BtnStyleSmall"
+                    android:text="xxd ttyS7.bin"
+                    android:layout_marginBottom="2dp" />
+
+                <Button
+                    android:id="@+id/btnPreset5"
+                    style="@style/BtnStyleSmall"
+                    android:text="echo hex > ttyS7 | xxd"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Debug Output -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Output"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#1565C0" />
+
+                    <Button
+                        android:id="@+id/btnCopyDebug"
+                        style="@style/BtnStyleSmall"
+                        android:text="@string/btn_copy"
+                        android:layout_marginEnd="4dp" />
+
+                    <Button
+                        android:id="@+id/btnClearDebug"
+                        style="@style/BtnStyleSmall"
+                        android:text="@string/btn_clear" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvDebugOutput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="200dp"
+                    android:background="#263238"
+                    android:textColor="#76FF03"
+                    android:fontFamily="monospace"
+                    android:textSize="11sp"
+                    android:padding="8dp"
+                    android:text="" />
+
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- ===== System Tab ===== -->
+        <ScrollView
+            android:id="@+id/panelSystem"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="App Update"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:id="@+id/tvUpdateServer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Server: http://192.168.0.140:8000"
+                    android:textSize="11sp"
+                    android:textColor="#999999"
+                    android:layout_marginBottom="8dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <Button
+                        android:id="@+id/btnCheckUpdate"
+                        style="@style/BtnStyleSmall"
+                        android:text="@string/btn_check_update"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/btnUpdateNow"
+                        style="@style/BtnStyleSmall"
+                        android:text="@string/btn_update_now"
+                        android:visibility="gone" />
+
+                    <ProgressBar
+                        android:id="@+id/progressUpdate"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="8dp"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvSystemLog"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#F5F5F5"
+                    android:fontFamily="monospace"
+                    android:textSize="12sp"
+                    android:padding="8dp"
+                    android:text="" />
+
+            </LinearLayout>
+        </ScrollView>
+
+    </FrameLayout>
 
     <!-- ===== Log Area ===== -->
-    <Button
-        android:id="@+id/btnClearLog"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/btn_clear_log"
-        android:textSize="12sp"
-        android:layout_marginBottom="4dp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Event Log"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnCopyLog"
+            style="@style/BtnStyleSmall"
+            android:text="@string/btn_copy_log"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnClearLog"
+            style="@style/BtnStyleSmall"
+            android:text="@string/btn_clear_log" />
+    </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"

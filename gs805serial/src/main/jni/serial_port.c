@@ -114,9 +114,9 @@ Java_kr_co_anyeats_gs805serial_serial_SerialPort_nativeOpen(
     /* No software flow control */
     cfg.c_iflag &= ~(IXON | IXOFF | IXANY);
 
-    /* VMIN=0, VTIME=1 (100ms timeout for non-blocking reads) */
-    cfg.c_cc[VMIN] = 0;
-    cfg.c_cc[VTIME] = 1;
+    /* VMIN=1, VTIME=0: block until at least 1 byte is available */
+    cfg.c_cc[VMIN] = 1;
+    cfg.c_cc[VTIME] = 0;
 
     if (tcsetattr(fd, TCSANOW, &cfg) != 0) {
         close(fd);
