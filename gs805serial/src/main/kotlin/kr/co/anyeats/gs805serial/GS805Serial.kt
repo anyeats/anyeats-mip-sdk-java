@@ -202,11 +202,11 @@ class GS805Serial(
     suspend fun getSalesCount(drink: DrinkNumber): DrinkSalesCount {
         ensureConnected()
         val response = _manager.sendCommand(GS805Protocol.getSalesCountCommand(drink.code))
-        val drinkNo = response.getDataByte(0)!!
-        val localNum = response.getDataDWord(1)!!
-        val cmdNum = response.getDataDWord(5)!!
+        val drinkNo = response.getDataByte(0) ?: 0
+        val localNum = response.getDataDWord(1) ?: 0
+        val cmdNum = response.getDataDWord(5) ?: 0
         return DrinkSalesCount(
-            drink = DrinkNumber.fromCode(drinkNo)!!,
+            drink = DrinkNumber.fromCode(drinkNo) ?: DrinkNumber.HOT_DRINK_1,
             localSalesCount = localNum,
             commandSalesCount = cmdNum
         )
@@ -215,7 +215,7 @@ class GS805Serial(
     suspend fun getMachineStatus(): MachineStatus {
         ensureConnected()
         val response = _manager.sendCommand(GS805Protocol.getMachineStatusCommand())
-        return MachineStatus.fromCode(response.statusCode!!)
+        return MachineStatus.fromCode(response.statusCode ?: 0)
     }
 
     suspend fun getErrorCode(): MachineError {
@@ -233,7 +233,7 @@ class GS805Serial(
     suspend fun getBalance(): MachineBalance {
         ensureConnected()
         val response = _manager.sendCommand(GS805Protocol.getBalanceCommand())
-        val balance = response.getDataByte(0)!!
+        val balance = response.getDataByte(0) ?: 0
         return MachineBalance(balance = balance)
     }
 
