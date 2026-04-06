@@ -254,6 +254,7 @@
   <table>
     <thead><tr><th>버전</th><th>날짜</th><th>내용</th></tr></thead>
     <tbody>
+      <tr><td>0.1.2</td><td>2026-04-06</td><td>상태 코드 레퍼런스 추가</td></tr>
       <tr><td>0.1.1</td><td>2026-04-02</td><td>Hardware UART (UartSerialConnection) 연결 방식 추가</td></tr>
       <tr><td>0.1</td><td>2026-04-01</td><td>초판 작성 — 전체 API (기본 14개 + 능동보고 4개 + R시리즈 2개 + Series 3/R 확장 11개)</td></tr>
     </tbody>
@@ -282,6 +283,12 @@
     <li class="toc-sub"><a href="#sec5-1">5.1 레시피 정의 후 실행</a></li>
     <li class="toc-sub"><a href="#sec5-2">5.2 채널 즉시 실행</a></li>
     <li><a href="#sec6">6. 기술 사양</a></li>
+    <li><a href="#sec7">7. 상태 코드 레퍼런스</a></li>
+    <li class="toc-sub"><a href="#sec7-1">7.1 STA Code (응답 상태 코드)</a></li>
+    <li class="toc-sub"><a href="#sec7-2">7.2 Controller Status (0x1E)</a></li>
+    <li class="toc-sub"><a href="#sec7-3">7.3 Drink Status (0x1F)</a></li>
+    <li class="toc-sub"><a href="#sec7-4">7.4 능동 보고 이벤트</a></li>
+    <li class="toc-sub"><a href="#sec7-5">7.5 Recipe RSTA Codes (0x1D)</a></li>
   </ol>
 </div>
 
@@ -555,6 +562,199 @@ gs805.<span class="fn">executeChannel</span>(
   <tr><th>자동 재연결</th><td>Exponential Backoff / Fixed Interval</td></tr>
   <tr><th>패키지</th><td><code>kr.co.anyeats.gs805serial</code></td></tr>
 </table>
+
+<!-- ==================== 7. 상태 코드 레퍼런스 ==================== -->
+<h1 id="sec7" class="page-break">7. 상태 코드 레퍼런스</h1>
+<p>GS805 프로토콜에서 사용되는 주요 상태 코드 및 플래그 정의입니다.</p>
+
+<h2 id="sec7-1">7.1 STA Code (응답 상태 코드)</h2>
+<p>모든 응답 메시지에 포함되는 STA 필드로, 명령 실행 결과를 나타냅니다.</p>
+<table>
+  <thead><tr><th>코드</th><th>이름</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><code>0x00</code></td><td>SUCCESS</td><td>정상/성공, 명령 수락 및 실행</td></tr>
+    <tr><td><code>0x01</code></td><td>BUSY</td><td>장치 사용 중, 명령 실행 불가</td></tr>
+    <tr><td><code>0x02</code></td><td>ERROR</td><td>장치 오류/실행 실패</td></tr>
+    <tr><td><code>0x03</code></td><td>PARAMETER_ERROR</td><td>매개변수 오류</td></tr>
+    <tr><td><code>0x04</code></td><td>INSUFFICIENT_BALANCE</td><td>잔액 부족</td></tr>
+    <tr><td><code>0x05</code></td><td>CONFIG_RESTRICTED</td><td>매개변수 명령 기능 제한</td></tr>
+    <tr><td><code>0x06</code></td><td>DATA_NOT_FOUND</td><td>데이터/레시피 미존재 또는 유효하지 않음</td></tr>
+    <tr><td><code>0x07</code></td><td>CONDITIONS_NOT_MET</td><td>실행 조건 미충족 (예: 제빙기 오프라인, 아이스 음료 제작 요청)</td></tr>
+    <tr><td><code>0x08</code></td><td>DEVICE_NOT_FOUND</td><td>지정 장치/부품/기능 미존재</td></tr>
+    <tr><td><code>0x7F</code></td><td>ACTIVE_REPORT</td><td>제어판이 능동적으로 보고하는 데이터 내용</td></tr>
+  </tbody>
+</table>
+
+<h2 id="sec7-2">7.2 Controller Status (0x1E) - ST_INFO 32-bit Flags</h2>
+<p><code>getControllerStatus()</code> 응답의 32비트 상태 플래그입니다.</p>
+
+<h3>Overall Status (Bit 0-1)</h3>
+<table>
+  <thead><tr><th>값</th><th>상태</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td>0</td><td>IDLE</td><td>정상 (유휴)</td></tr>
+    <tr><td>1</td><td>BUSY</td><td>정상 (바쁨)</td></tr>
+    <tr><td>2</td><td>EXCEPTION</td><td>예외</td></tr>
+    <tr><td>3</td><td>FAILURE</td><td>고장</td></tr>
+  </tbody>
+</table>
+
+<h3>Module Online/Offline Status</h3>
+<table>
+  <thead><tr><th>Bit</th><th>모듈</th><th>0</th><th>1</th><th>에러 코드</th></tr></thead>
+  <tbody>
+    <tr><td>2</td><td>전면 도어 모듈</td><td>온라인</td><td>오프라인</td><td>E14</td></tr>
+    <tr><td>3</td><td>제빙 모듈</td><td>온라인</td><td>오프라인</td><td>E15</td></tr>
+    <tr><td>4</td><td>분쇄(Grinding) 모듈</td><td>온라인</td><td>오프라인</td><td>E10</td></tr>
+  </tbody>
+</table>
+
+<h3>Module Fault Status</h3>
+<table>
+  <thead><tr><th>Bit</th><th>모듈</th><th>0</th><th>1</th></tr></thead>
+  <tbody>
+    <tr><td>5</td><td>전면 도어 상태</td><td>정상</td><td>고장</td></tr>
+    <tr><td>6</td><td>제빙 상태</td><td>정상</td><td>고장</td></tr>
+    <tr><td>7</td><td>분쇄 상태</td><td>정상</td><td>고장</td></tr>
+  </tbody>
+</table>
+
+<h3>Cup / Lid / Material Status</h3>
+<table>
+  <thead><tr><th>Bit</th><th>항목</th><th>0</th><th>1</th><th>에러 코드</th></tr></thead>
+  <tbody>
+    <tr><td>8</td><td>컵 없음 플래그</td><td>컵 있음</td><td>컵 없음</td><td>E02</td></tr>
+    <tr><td>9</td><td>뚜껑 없음 플래그</td><td>뚜껑 있음</td><td>뚜껑 없음</td><td>A01</td></tr>
+    <tr><td>10</td><td>물탱크 부족</td><td>물 있음</td><td>물 없음</td><td>E01</td></tr>
+    <tr><td>11</td><td>폐수탱크 경고</td><td>정상</td><td>경고</td><td></td></tr>
+    <tr><td>12</td><td>시동 가열 플래그</td><td>시동 시 가열 안 함</td><td>첫 가열 중</td><td></td></tr>
+    <tr><td>13</td><td>컵 홀더에 컵</td><td>컵 없음</td><td>컵 있음</td><td>A09</td></tr>
+    <tr><td>14</td><td>콩 호퍼</td><td>콩 있음</td><td>비어있음</td><td>A165</td></tr>
+    <tr><td>15</td><td>주 제어 센서</td><td>정상</td><td>비정상</td><td>E04</td></tr>
+  </tbody>
+</table>
+
+<h3>Water Tank Status (Bit 16-19)</h3>
+<table>
+  <thead><tr><th>Bit</th><th>탱크</th><th>0</th><th>1</th><th>에러 코드</th></tr></thead>
+  <tbody>
+    <tr><td>16</td><td>1번 물탱크</td><td>물 있음</td><td>물 없음</td><td>A10</td></tr>
+    <tr><td>17</td><td>2번 물탱크</td><td>물 있음</td><td>물 없음</td><td>A11</td></tr>
+    <tr><td>18</td><td>3번 물탱크</td><td>물 있음</td><td>물 없음</td><td>A12</td></tr>
+    <tr><td>19</td><td>4번 물탱크</td><td>물 있음</td><td>물 없음</td><td>A13</td></tr>
+  </tbody>
+</table>
+
+<h3>Pump Status (Bit 20-24)</h3>
+<table>
+  <thead><tr><th>Bit</th><th>펌프</th><th>0</th><th>1</th><th>에러 코드</th></tr></thead>
+  <tbody>
+    <tr><td>20</td><td>1번 펌프</td><td>정상</td><td>고장</td><td>A14</td></tr>
+    <tr><td>21</td><td>2번 펌프</td><td>정상</td><td>고장</td><td>A15</td></tr>
+    <tr><td>22</td><td>3번 펌프</td><td>정상</td><td>고장</td><td>A16</td></tr>
+    <tr><td>23</td><td>4번 펌프</td><td>정상</td><td>고장</td><td>A17</td></tr>
+    <tr><td>24</td><td>부스터 펌프</td><td>정상</td><td>고장</td><td>E19</td></tr>
+  </tbody>
+</table>
+
+<h3>Tank / Valve / Hardware Status (Bit 25-31)</h3>
+<table>
+  <thead><tr><th>Bit</th><th>항목</th><th>0</th><th>1</th><th>에러 코드</th></tr></thead>
+  <tbody>
+    <tr><td>25</td><td>온수탱크</td><td>정상</td><td>가열 시간 초과</td><td>A05</td></tr>
+    <tr><td>26</td><td>냉수탱크</td><td>정상</td><td>냉각 시간 초과</td><td>A06</td></tr>
+    <tr><td>27</td><td>배수 솔레노이드 밸브</td><td>정상</td><td>고장</td><td>E20</td></tr>
+    <tr><td>28</td><td>컵 드로퍼 1</td><td>정상</td><td>고장</td><td>E22</td></tr>
+    <tr><td>29</td><td>컵 드로퍼 2</td><td>정상</td><td>고장</td><td>E23</td></tr>
+    <tr><td>30</td><td>트랙 오류</td><td>없음</td><td>오류 있음</td><td>E12</td></tr>
+    <tr><td>31</td><td>전자 잠금 장치</td><td>정상</td><td>결함</td><td>A116</td></tr>
+  </tbody>
+</table>
+
+<h2 id="sec7-3">7.3 Drink Status (0x1F) - DK_INFO</h2>
+<p><code>getDrinkStatus()</code> 응답의 음료 제조 상태 정보입니다.</p>
+
+<h3>Execution Result (Bit 30-31)</h3>
+<table>
+  <thead><tr><th>값</th><th>결과</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td>0</td><td>NOT_EXECUTED</td><td>미실행 (음료 제조 미진행)</td></tr>
+    <tr><td>1</td><td>EXECUTING</td><td>실행 중 (음료 제조 실행 중)</td></tr>
+    <tr><td>2</td><td>SUCCESS</td><td>성공적으로 완료됨</td></tr>
+    <tr><td>3</td><td>FAILURE</td><td>실패로 종료됨</td></tr>
+  </tbody>
+</table>
+
+<h3>Failure Cause (Bit 24-29) - EM Codes</h3>
+<table>
+  <thead><tr><th>코드</th><th>이름</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td>0</td><td>NONE</td><td>실패 없음</td></tr>
+    <tr><td>1</td><td>EM01</td><td>레시피 정보 이상</td></tr>
+    <tr><td>2</td><td>EM02</td><td>컵 시작 위치 전달 실패</td></tr>
+    <tr><td>3</td><td>EM03</td><td>컵 작업 위치 전달 실패</td></tr>
+    <tr><td>4</td><td>EM04</td><td>컵 종점 위치 전달 실패</td></tr>
+    <tr><td>5</td><td>EM05</td><td>문 열기 작동 실패</td></tr>
+    <tr><td>6</td><td>EM06</td><td>문 닫힘 작동 실패</td></tr>
+    <tr><td>7</td><td>EM07</td><td>자동 컵 할당 실패</td></tr>
+    <tr><td>8</td><td>EM08</td><td>수동 컵 배치 시간 초과</td></tr>
+    <tr><td>9</td><td>EM09</td><td>저수위 (유량계)</td></tr>
+    <tr><td>10</td><td>EM10</td><td>병렬 분쇄 작업 실패 (제작 시)</td></tr>
+    <tr><td>11</td><td>EM11</td><td>분쇄 작업 실패 (컵 전달 전)</td></tr>
+    <tr><td>12</td><td>EM12</td><td>컵 수령 대기 시간 초과</td></tr>
+    <tr><td>13</td><td>EM13</td><td>분쇄 오프라인 또는 결함</td></tr>
+    <tr><td>14</td><td>EM14</td><td>제조 과정 강제 종료됨</td></tr>
+    <tr><td>15</td><td>EM15</td><td>제빙 실패</td></tr>
+    <tr><td>16</td><td>EM16</td><td>뚜껑 배치 실패</td></tr>
+    <tr><td>17</td><td>EM17</td><td>뚜껑 압착 실패</td></tr>
+    <tr><td>18</td><td>EM18</td><td>전면 도어 오프라인 (제작 전)</td></tr>
+    <tr><td>19</td><td>EM19</td><td>전면 도어 장기 바쁨 (제작 전)</td></tr>
+    <tr><td>20</td><td>EM20</td><td>분쇄 완료 알림 시간 초과</td></tr>
+    <tr><td>21</td><td>EM21</td><td>제조 과정 중 컵 분실</td></tr>
+    <tr><td>22</td><td>EM22</td><td>컵 전달 실행 (제작 전 컵 받침에 컵 있음)</td></tr>
+    <tr><td>23</td><td>EM23</td><td>분쇄 사전 작동 실패 (컵 할당 후)</td></tr>
+    <tr><td>24</td><td>EM24</td><td>인스턴트 단계 실행 실패 (비정상 매개변수 또는 솔레노이드 밸브 오류)</td></tr>
+    <tr><td>25</td><td>EM25</td><td>폐수 트레이 수축 실패 (JK86-B)</td></tr>
+    <tr><td>26</td><td>EM26</td><td>폐수 트레이 확장 실패 (JK86-B)</td></tr>
+  </tbody>
+</table>
+
+<h2 id="sec7-4">7.4 능동 보고 이벤트</h2>
+<p>머신이 자동으로 보고하는 이벤트입니다 (STA = <code>0x7F</code>).</p>
+<table>
+  <thead><tr><th>CMD</th><th>이벤트</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><code>0x05</code></td><td>CUP_DROP_SUCCESS</td><td>컵 낙하 성공</td></tr>
+    <tr><td><code>0x10</code></td><td>DRINK_COMPLETE</td><td>음료 제조 완료</td></tr>
+    <tr><td><code>0x06</code></td><td>ICE_DROP_COMPLETE</td><td>얼음 투하 완료</td></tr>
+    <tr><td><code>0x20</code></td><td>TRACK_OBSTACLE</td><td>트랙 장애물 감지 / 캡핑 실패 / 전면 도어 오프라인</td></tr>
+  </tbody>
+</table>
+
+<h2 id="sec7-5">7.5 Recipe RSTA Codes (0x1D)</h2>
+<p><code>setDrinkRecipeProcess()</code> 명령의 응답 코드입니다.</p>
+<table>
+  <thead><tr><th>코드</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><code>0x00</code></td><td>명령 정상 실행</td></tr>
+    <tr><td><code>0x02</code></td><td>레시피 저장 오류</td></tr>
+    <tr><td><code>0xD1</code></td><td>인스턴트 매개변수 오류</td></tr>
+    <tr><td><code>0xD2</code></td><td>분쇄 매개변수 오류</td></tr>
+    <tr><td><code>0xD3</code></td><td>컵 디스펜서/배치 매개변수 오류</td></tr>
+    <tr><td><code>0xD4</code></td><td>제빙 매개변수 오류</td></tr>
+    <tr><td><code>0xD5</code></td><td>뚜껑 배치 매개변수 오류</td></tr>
+    <tr><td><code>0xD6</code></td><td>뚜껑 압착 매개변수 오류</td></tr>
+    <tr><td><code>0xD7</code></td><td>독립 교반 매개변수 오류</td></tr>
+    <tr><td><code>0xFA</code></td><td>작업 단계 매개변수 구문 분석 오류</td></tr>
+    <tr><td><code>0xFB</code></td><td>OPT-n 매개변수 오류</td></tr>
+    <tr><td><code>0xFC</code></td><td>Drink_NO 매개변수 오류</td></tr>
+    <tr><td><code>0xFD</code></td><td>단계 오류 (예: 컵 배치 전 인스턴트 실행)</td></tr>
+    <tr><td><code>0xFE</code></td><td>현재 메인 보드가 이 명령을 지원하지 않음</td></tr>
+  </tbody>
+</table>
+<div class="info-box">
+  <strong>참고:</strong> 상태 코드의 전체 상세 내용은 GS805 프로토콜 문서를 참조하십시오. SDK의 응답 객체는 이 코드들을 파싱하여 타입 안전한 enum/sealed class로 제공합니다.
+</div>
 
 <div class="footer">
   &copy; 2026 Anyeats World Co., Ltd. All rights reserved. &mdash; Confidential
