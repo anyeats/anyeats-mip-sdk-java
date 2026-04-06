@@ -495,8 +495,8 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnSetHotTemp).setOnClickListener {
             lifecycleScope.launch {
                 try {
-                    gs805.setHotTemperature(90, 70)
-                    appendLog("Hot temperature set: 70-90C")
+                    gs805.setHotTemperature(65, 60)
+                    appendLog("Hot temperature set: 60-65C")
                 } catch (e: Exception) {
                     appendLog("ERROR: ${e.message}")
                 }
