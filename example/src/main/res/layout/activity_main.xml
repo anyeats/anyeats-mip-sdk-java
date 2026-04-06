@@ -217,6 +217,29 @@
                         android:text="Cold 3&amp;2" />
                 </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnRecClearHot1"
+                        style="@style/BtnStyle"
+                        android:text="Clear hotDrink1" />
+
+                    <Button
+                        android:id="@+id/btnRecClearSetMake"
+                        style="@style/BtnStyle"
+                        android:text="Clear→Set→Make" />
+
+                    <Button
+                        android:id="@+id/btnRecClearMakeVerify"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="Clear→Make(verify)" />
+                </LinearLayout>
+
                 <!-- ===== Drink ===== -->
                 <TextView
                     android:layout_width="match_parent"
@@ -728,6 +751,12 @@
                     android:id="@+id/btnPreset5"
                     style="@style/BtnStyleSmall"
                     android:text="echo hex > ttyS7 | xxd"
+                    android:layout_marginBottom="2dp" />
+
+                <Button
+                    android:id="@+id/btnPreset6"
+                    style="@style/BtnStyleSmall"
+                    android:text="recipe 0x1D > ttyS7 | xxd"
                     android:layout_marginBottom="8dp" />
 
                 <!-- Debug Output -->

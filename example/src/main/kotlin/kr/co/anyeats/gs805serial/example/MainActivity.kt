@@ -343,109 +343,101 @@ class MainActivity : AppCompatActivity() {
 
     // ========== Recipe Menu (0x1D) ==========
 
+    /** Clear recipe, set new steps, then make drink */
+    private fun setRecipeAndMake(label: String, drink: DrinkNumber, steps: List<RecipeStep>) {
+        lifecycleScope.launch {
+            try {
+                appendLog("Recipe: $label - Clear...")
+                gs805.setDrinkRecipeProcess(drink, listOf(RecipeStep.clear()))
+                appendLog("Recipe: $label - Set ${steps.size} step(s)...")
+                gs805.setDrinkRecipeProcess(drink, steps)
+                appendLog("Recipe: $label - Make...")
+                gs805.makeDrink(drink)
+                appendLog("Recipe: $label done")
+            } catch (e: Exception) {
+                appendLog("ERROR: ${e.message}")
+            }
+        }
+    }
+
     private fun setupRecipeMenuButtons() {
         // Hot Make 1: recipe with ch0 only
         findViewById<Button>(R.id.btnRecHotMake1).setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    appendLog("Recipe: Hot Make 1 (ch0)")
-                    val steps = listOf(
-                        RecipeStep.instantChannel(channel = 0, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 0)
-                    )
-                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, steps)
-                    gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
-                    appendLog("Recipe: Hot Make 1 done")
-                } catch (e: Exception) {
-                    appendLog("ERROR: ${e.message}")
-                }
-            }
+            setRecipeAndMake("Hot Make 1 (ch0)", DrinkNumber.HOT_DRINK_1, listOf(
+                RecipeStep.instantChannel(channel = 0, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 0)
+            ))
         }
 
         // Hot Make 1&2: recipe with ch0, ch1
         findViewById<Button>(R.id.btnRecHotMake12).setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    appendLog("Recipe: Hot Make 1&2 (ch0->ch1)")
-                    val steps = listOf(
-                        RecipeStep.instantChannel(channel = 0, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0),
-                        RecipeStep.instantChannel(channel = 1, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
-                    )
-                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, steps)
-                    gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
-                    appendLog("Recipe: Hot Make 1&2 done")
-                } catch (e: Exception) {
-                    appendLog("ERROR: ${e.message}")
-                }
-            }
+            setRecipeAndMake("Hot Make 1&2 (ch0->ch1)", DrinkNumber.HOT_DRINK_1, listOf(
+                RecipeStep.instantChannel(channel = 0, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0),
+                RecipeStep.instantChannel(channel = 1, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
+            ))
         }
 
         // Hot Make 3&2: recipe with ch2, ch1
         findViewById<Button>(R.id.btnRecHotMake32).setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    appendLog("Recipe: Hot Make 3&2 (ch2->ch1)")
-                    val steps = listOf(
-                        RecipeStep.instantChannel(channel = 2, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0),
-                        RecipeStep.instantChannel(channel = 1, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
-                    )
-                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, steps)
-                    gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
-                    appendLog("Recipe: Hot Make 3&2 done")
-                } catch (e: Exception) {
-                    appendLog("ERROR: ${e.message}")
-                }
-            }
+            setRecipeAndMake("Hot Make 3&2 (ch2->ch1)", DrinkNumber.HOT_DRINK_1, listOf(
+                RecipeStep.instantChannel(channel = 2, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0),
+                RecipeStep.instantChannel(channel = 1, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
+            ))
         }
 
         // Cold Make 1: recipe with ch0 only
         findViewById<Button>(R.id.btnRecColdMake1).setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    appendLog("Recipe: Cold Make 1 (ch0)")
-                    val steps = listOf(
-                        RecipeStep.instantChannel(channel = 0, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 0)
-                    )
-                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, steps)
-                    gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
-                    appendLog("Recipe: Cold Make 1 done")
-                } catch (e: Exception) {
-                    appendLog("ERROR: ${e.message}")
-                }
-            }
+            setRecipeAndMake("Cold Make 1 (ch0)", DrinkNumber.HOT_DRINK_1, listOf(
+                RecipeStep.instantChannel(channel = 0, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 0)
+            ))
         }
 
         // Cold Make 1&2: recipe with ch0, ch1
         findViewById<Button>(R.id.btnRecColdMake12).setOnClickListener {
+            setRecipeAndMake("Cold Make 1&2 (ch0->ch1)", DrinkNumber.HOT_DRINK_1, listOf(
+                RecipeStep.instantChannel(channel = 0, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0),
+                RecipeStep.instantChannel(channel = 1, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
+            ))
+        }
+
+        // Cold Make 3&2: recipe with ch2, ch1
+        findViewById<Button>(R.id.btnRecColdMake32).setOnClickListener {
+            setRecipeAndMake("Cold Make 3&2 (ch2->ch1)", DrinkNumber.HOT_DRINK_1, listOf(
+                RecipeStep.instantChannel(channel = 2, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0),
+                RecipeStep.instantChannel(channel = 1, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
+            ))
+        }
+
+        // Clear hotDrink1: send clear (NONE) step
+        findViewById<Button>(R.id.btnRecClearHot1).setOnClickListener {
             lifecycleScope.launch {
                 try {
-                    appendLog("Recipe: Cold Make 1&2 (ch0->ch1)")
-                    val steps = listOf(
-                        RecipeStep.instantChannel(channel = 0, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0),
-                        RecipeStep.instantChannel(channel = 1, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
-                    )
-                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, steps)
-                    gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
-                    appendLog("Recipe: Cold Make 1&2 done")
+                    appendLog("Recipe: Clear HOT_DRINK_1...")
+                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, listOf(RecipeStep.clear()))
+                    appendLog("Recipe: Clear HOT_DRINK_1 done")
                 } catch (e: Exception) {
                     appendLog("ERROR: ${e.message}")
                 }
             }
         }
 
-        // Cold Make 3&2: recipe with ch2, ch1
-        findViewById<Button>(R.id.btnRecColdMake32).setOnClickListener {
+        // Clear -> Set -> Make: full flow test
+        findViewById<Button>(R.id.btnRecClearSetMake).setOnClickListener {
+            setRecipeAndMake("Clear->Set->Make", DrinkNumber.HOT_DRINK_1, listOf(
+                RecipeStep.instantChannel(channel = 0, waterType = WaterType.HOT, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 0)
+            ))
+        }
+
+        // Clear then Make (verify): clear then immediately makeDrink - expect 0x6 error if clear worked
+        findViewById<Button>(R.id.btnRecClearMakeVerify).setOnClickListener {
             lifecycleScope.launch {
                 try {
-                    appendLog("Recipe: Cold Make 3&2 (ch2->ch1)")
-                    val steps = listOf(
-                        RecipeStep.instantChannel(channel = 2, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 0, materialSpeed = 50, mixSpeed = 0),
-                        RecipeStep.instantChannel(channel = 1, waterType = WaterType.COLD, materialDuration = 10, waterAmount = 2000, materialSpeed = 50, mixSpeed = 100)
-                    )
-                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, steps)
+                    appendLog("Recipe: Clear then Make (verify)...")
+                    gs805.setDrinkRecipeProcess(DrinkNumber.HOT_DRINK_1, listOf(RecipeStep.clear()))
+                    appendLog("Recipe: Clear done, now makeDrink (expect 0x6 error if clear worked)...")
                     gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
-                    appendLog("Recipe: Cold Make 3&2 done")
+                    appendLog("Recipe: makeDrink returned OK (recipe was NOT cleared?)")
                 } catch (e: Exception) {
-                    appendLog("ERROR: ${e.message}")
+                    appendLog("Recipe verify: ${e.message} (0x6 = clear worked)")
                 }
             }
         }
@@ -993,7 +985,8 @@ class MainActivity : AppCompatActivity() {
             R.id.btnPreset2 to "su 0 sh -c \"timeout 15 cat /dev/ttyS7 > /data/local/tmp/ttyS7.bin &\"",
             R.id.btnPreset3 to "su 0 am start -n com.yj.coffeemachines/.MainActivity",
             R.id.btnPreset4 to "su 0 xxd /data/local/tmp/ttyS7.bin",
-            R.id.btnPreset5 to "su 0 sh -c \"echo AA55020B0C | xxd -r -p > /dev/ttyS7 & timeout 1 cat /dev/ttyS7 | xxd\""
+            R.id.btnPreset5 to "su 0 sh -c \"echo AA55020B0C | xxd -r -p > /dev/ttyS7 & timeout 1 cat /dev/ttyS7 | xxd\"",
+            R.id.btnPreset6 to "su 0 sh -c \"echo AA55121D01010D010000320032 0000FF00000000A1 | xxd -r -p > /dev/ttyS7 & timeout 1 cat /dev/ttyS7 | xxd\""
         )
 
         presetCommands.forEach { (id, cmd) ->

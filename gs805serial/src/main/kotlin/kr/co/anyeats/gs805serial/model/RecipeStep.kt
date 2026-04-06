@@ -37,6 +37,14 @@ class RecipeStep private constructor(
 
     companion object {
         /**
+         * Create a clear/none step (OPT=0x00).
+         * Used to clear existing recipe before setting a new one.
+         */
+        fun clear(): RecipeStep {
+            return RecipeStep(RecipeOperationType.NONE, byteArrayOf())
+        }
+
+        /**
          * Create an instant channel step (OPT=0x01).
          * This is the main step for dispensing powder + water.
          *
