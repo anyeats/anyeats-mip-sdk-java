@@ -240,8 +240,8 @@
   <div class="cover-title">Interface Guide</div>
   <div class="cover-subtitle">Android SDK (Kotlin)</div>
   <div class="cover-meta">
-    <strong>Version</strong> 0.1<br>
-    <strong>Date</strong> 2026-04-01<br>
+    <strong>Version</strong> 0.1.3<br>
+    <strong>Date</strong> 2026-04-08<br>
     <strong>Author</strong> Anyeats World Co., Ltd.<br>
     <strong>Contact</strong> rnd@anyeats.co.kr<br>
     <strong>Classification</strong> Confidential
@@ -254,6 +254,7 @@
   <table>
     <thead><tr><th>버전</th><th>날짜</th><th>내용</th></tr></thead>
     <tbody>
+      <tr><td>0.1.3</td><td>2026-04-08</td><td>0x15 레시피 시간 설정 추가, 미지원 명령 제거 (0x1D, 0x25, 0x1B, 0x24)</td></tr>
       <tr><td>0.1.2</td><td>2026-04-06</td><td>상태 코드 레퍼런스 추가</td></tr>
       <tr><td>0.1.1</td><td>2026-04-02</td><td>Hardware UART (UartSerialConnection) 연결 방식 추가</td></tr>
       <tr><td>0.1</td><td>2026-04-01</td><td>초판 작성 — 전체 API (기본 14개 + 능동보고 4개 + R시리즈 2개 + Series 3/R 확장 11개)</td></tr>
@@ -277,18 +278,16 @@
     <li class="toc-sub"><a href="#sec4-3">4.3 정보 조회</a></li>
     <li class="toc-sub"><a href="#sec4-4">4.4 유지보수</a></li>
     <li class="toc-sub"><a href="#sec4-5">4.5 Series 3/R 확장 명령</a></li>
-    <li class="toc-sub"><a href="#sec4-6">4.6 커스텀 레시피 (R시리즈)</a></li>
+    <li class="toc-sub"><a href="#sec4-6">4.6 레시피 시간 설정 (0x15)</a></li>
     <li class="toc-sub"><a href="#sec4-7">4.7 Event Flows</a></li>
     <li><a href="#sec5">5. 사용 예제</a></li>
-    <li class="toc-sub"><a href="#sec5-1">5.1 레시피 정의 후 실행</a></li>
-    <li class="toc-sub"><a href="#sec5-2">5.2 채널 즉시 실행</a></li>
+    <li class="toc-sub"><a href="#sec5-1">5.1 레시피 시간 설정 + 음료 제조</a></li>
     <li><a href="#sec6">6. 기술 사양</a></li>
     <li><a href="#sec7">7. 상태 코드 레퍼런스</a></li>
     <li class="toc-sub"><a href="#sec7-1">7.1 STA Code (응답 상태 코드)</a></li>
     <li class="toc-sub"><a href="#sec7-2">7.2 Controller Status (0x1E)</a></li>
     <li class="toc-sub"><a href="#sec7-3">7.3 Drink Status (0x1F)</a></li>
     <li class="toc-sub"><a href="#sec7-4">7.4 능동 보고 이벤트</a></li>
-    <li class="toc-sub"><a href="#sec7-5">7.5 Recipe RSTA Codes (0x1D)</a></li>
   </ol>
 </div>
 
@@ -320,7 +319,7 @@
   </tbody>
 </table>
 <div class="info-box">
-  <strong>참고:</strong> ShakeBox(GS805)는 Series 3 (단일 스레드)입니다. R시리즈 전용 명령(레시피, 채널 실행)은 R시리즈 모델에서만 사용 가능합니다.
+  <strong>참고:</strong> ShakeBox(GS805)는 Series 3 (단일 스레드)입니다. 본 문서는 GS805에서 동작 확인된 명령만 기술합니다.
 </div>
 
 <h2 id="sec1-3">1.3 아키텍처</h2>
@@ -452,11 +451,9 @@ gs805.<span class="fn">dispose</span>()</code></pre>
   <tbody>
     <tr class="group-header"><td colspan="3">단위 기능 테스트</td></tr>
     <tr><td>0x1A</td><td><code>unitFunctionTest(testCmd, data1, data2, data3)</code></td><td>분말/온수/좌표/컵/뚜껑/문/얼음 등 개별 기능 테스트</td></tr>
-
-    <tr class="group-header"><td colspan="3">전자 잠금 장치</td></tr>
-    <tr><td rowspan="3">0x1B</td><td><code>lockDoor(lockNumber?)</code></td><td>잠금 장치 잠금</td></tr>
-    <tr><td><code>unlockDoor(lockNumber?)</code></td><td>잠금 장치 해제</td></tr>
-    <tr><td><code>getLockStatus(lockNumber?)</code></td><td>잠금 상태 조회</td></tr>
+    <tr><td></td><td colspan="2">
+      <strong>문 제어:</strong> 열기 <code>unitFunctionTest(3, 4, 0, 0)</code> / 닫기 <code>unitFunctionTest(3, 4, 1, 0)</code>
+    </td></tr>
 
     <tr class="group-header"><td colspan="3">물 보충</td></tr>
     <tr><td>0x1C</td><td><code>waterRefill()</code></td><td>물 보충 작업 실행</td></tr>
@@ -472,22 +469,41 @@ gs805.<span class="fn">dispose</span>()</code></pre>
     <tr><td rowspan="2">0x23</td><td><code>forceStopDrinkProcess()</code></td><td>음료 제조 프로세스 강제 종료</td></tr>
     <tr><td><code>forceStopCupDelivery()</code></td><td>컵 전달 프로세스 강제 종료</td></tr>
 
-    <tr class="group-header"><td colspan="3">컵 전달</td></tr>
-    <tr><td>0x24</td><td><code>cupDelivery(waitTimeSeconds)</code></td><td>컵 전달 (문 개방 후 지정 시간 대기)</td></tr>
   </tbody>
 </table>
 
-<h2 id="sec4-6">4.6 커스텀 레시피 (R시리즈 전용)</h2>
-<div class="warn-box">
-  <strong>주의:</strong> 아래 명령은 R시리즈(GS801, RD-JK86, JK88) 전용입니다. GS805(Series 3)에서는 지원되지 않습니다.
-</div>
+<h2 id="sec4-6">4.6 레시피 시간 설정 (0x15)</h2>
+<p>채널별 분말 시간과 물 시간을 설정하여 음료 레시피를 구성합니다.</p>
 <table>
   <thead><tr><th>CMD</th><th style="width:40%">메서드</th><th>설명</th></tr></thead>
   <tbody>
-    <tr><td>0x1D</td><td><code>setDrinkRecipeProcess(drink, steps)</code></td><td>커스텀 음료 레시피 정의 (최대 8단계)</td></tr>
-    <tr><td>0x25</td><td><code>executeChannel(channel, waterType, ...)</code></td><td>단일 채널 즉시 실행</td></tr>
+    <tr><td>0x15</td><td><code>setDrinkRecipeTime(drink, channelTimes)</code></td><td>음료별 채널 시간 설정 (8채널, 0.1초 단위)</td></tr>
   </tbody>
 </table>
+
+<h3>파라미터</h3>
+<table>
+  <thead><tr><th>파라미터</th><th>값</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><code>drink</code></td><td>0x01~0x07 (온음료), 0x11~0x17 (냉음료)</td><td>음료 번호</td></tr>
+    <tr><td><code>channelTimes</code></td><td>8채널 &times; (materialTime, waterTime)</td><td>각 채널의 분말/물 시간 (0.1초 단위)</td></tr>
+  </tbody>
+</table>
+
+<h3>채널 매핑</h3>
+<table>
+  <thead><tr><th>채널</th><th>설명</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>ch1</td><td>물 + 1번통</td><td>동시 불가 (물과 분말 순차 출력)</td></tr>
+    <tr><td>ch2</td><td>2번통</td><td></td></tr>
+    <tr><td>ch3</td><td>3번통</td><td></td></tr>
+    <tr><td>ch4</td><td>4번통</td><td></td></tr>
+    <tr><td>ch5~ch8</td><td>확장 채널</td><td></td></tr>
+  </tbody>
+</table>
+<div class="info-box">
+  <strong>참고:</strong> 채널은 순차적으로 실행됩니다 (재정렬 없음). 값이 (0, 0)인 채널은 비활성화됩니다.
+</div>
 
 <h2 id="sec4-7">4.7 Event Flows</h2>
 <p>SDK는 Kotlin Flow 기반의 실시간 이벤트 스트리밍을 제공합니다.</p>
@@ -515,37 +531,34 @@ gs805.<span class="fn">dispose</span>()</code></pre>
 <!-- ==================== 5. 사용 예제 ==================== -->
 <h1 id="sec5" class="page-break">5. 사용 예제</h1>
 
-<h2 id="sec5-1">5.1 레시피 정의 후 실행 (R시리즈)</h2>
-<pre><code><span class="cmt">// 레시피 정의: 컵 배출 → Powder1 + 물 200mL → Powder2</span>
-<span class="kw">val</span> steps = <span class="fn">listOf</span>(
-    <span class="type">RecipeStep</span>.<span class="fn">cupDispense</span>(dispenser = <span class="num">1</span>),
-    <span class="type">RecipeStep</span>.<span class="fn">instantChannel</span>(
-        channel = <span class="num">0</span>, waterType = <span class="type">WaterType</span>.HOT,
-        materialDuration = <span class="num">1000</span>, waterAmount = <span class="num">2000</span>,
-        materialSpeed = <span class="num">50</span>, mixSpeed = <span class="num">30</span>,
-    ),
-    <span class="type">RecipeStep</span>.<span class="fn">instantChannel</span>(
-        channel = <span class="num">1</span>, waterType = <span class="type">WaterType</span>.HOT,
-        materialDuration = <span class="num">500</span>, waterAmount = <span class="num">0</span>,
-        materialSpeed = <span class="num">50</span>, mixSpeed = <span class="num">30</span>,
-    ),
-)
-gs805.<span class="fn">setDrinkRecipeProcess</span>(<span class="type">DrinkNumber</span>.HOT_DRINK_1, steps)
-gs805.<span class="fn">makeDrink</span>(<span class="type">DrinkNumber</span>.HOT_DRINK_1)</code></pre>
+<h2 id="sec5-1">5.1 레시피 시간 설정 + 음료 제조</h2>
+<pre><code><span class="cmt">// 1. 인스턴스 생성 (Hardware UART)</span>
+<span class="kw">val</span> gs805 = <span class="type">GS805Serial</span>(context, connection = <span class="type">UartSerialConnection</span>())
+<span class="kw">val</span> devices = gs805.<span class="fn">listDevices</span>()
+gs805.<span class="fn">connect</span>(devices.first())
 
-<h2 id="sec5-2">5.2 채널 즉시 실행 (R시리즈)</h2>
-<pre><code><span class="cmt">// 컵 낙하 후 채널 순차 실행</span>
-gs805.<span class="fn">testCupDrop</span>()
-gs805.<span class="fn">executeChannel</span>(
-    channel = <span class="num">0</span>, waterType = <span class="type">WaterType</span>.HOT,
-    materialDuration = <span class="num">1000</span>, waterAmount = <span class="num">2000</span>,
-    materialSpeed = <span class="num">50</span>
+<span class="cmt">// 2. 레시피 시간 설정 (0x15) — 온음료 1번</span>
+<span class="cmt">// ch1: 분말 3.0초 + 물 5.0초, ch2: 분말 2.0초 + 물 3.0초, 나머지 비활성</span>
+gs805.<span class="fn">setDrinkRecipeTime</span>(
+    drink = <span class="type">DrinkNumber</span>.HOT_DRINK_1,
+    channelTimes = <span class="fn">listOf</span>(
+        <span class="type">ChannelTime</span>(materialTime = <span class="num">30</span>, waterTime = <span class="num">50</span>),  <span class="cmt">// ch1: 3.0s, 5.0s</span>
+        <span class="type">ChannelTime</span>(materialTime = <span class="num">20</span>, waterTime = <span class="num">30</span>),  <span class="cmt">// ch2: 2.0s, 3.0s</span>
+        <span class="type">ChannelTime</span>(materialTime = <span class="num">0</span>, waterTime = <span class="num">0</span>),    <span class="cmt">// ch3: 비활성</span>
+        <span class="type">ChannelTime</span>(materialTime = <span class="num">0</span>, waterTime = <span class="num">0</span>),    <span class="cmt">// ch4: 비활성</span>
+        <span class="type">ChannelTime</span>(materialTime = <span class="num">0</span>, waterTime = <span class="num">0</span>),    <span class="cmt">// ch5: 비활성</span>
+        <span class="type">ChannelTime</span>(materialTime = <span class="num">0</span>, waterTime = <span class="num">0</span>),    <span class="cmt">// ch6: 비활성</span>
+        <span class="type">ChannelTime</span>(materialTime = <span class="num">0</span>, waterTime = <span class="num">0</span>),    <span class="cmt">// ch7: 비활성</span>
+        <span class="type">ChannelTime</span>(materialTime = <span class="num">0</span>, waterTime = <span class="num">0</span>),    <span class="cmt">// ch8: 비활성</span>
+    )
 )
-gs805.<span class="fn">executeChannel</span>(
-    channel = <span class="num">1</span>, waterType = <span class="type">WaterType</span>.HOT,
-    materialDuration = <span class="num">500</span>, waterAmount = <span class="num">0</span>,
-    materialSpeed = <span class="num">50</span>
-)</code></pre>
+
+<span class="cmt">// 3. 음료 제조</span>
+gs805.<span class="fn">makeDrink</span>(<span class="type">DrinkNumber</span>.HOT_DRINK_1)
+
+<span class="cmt">// 4. 문 제어 (unitFunctionTest 사용)</span>
+gs805.<span class="fn">unitFunctionTest</span>(<span class="num">3</span>, <span class="num">4</span>, <span class="num">0</span>, <span class="num">0</span>)  <span class="cmt">// 문 열기</span>
+gs805.<span class="fn">unitFunctionTest</span>(<span class="num">3</span>, <span class="num">4</span>, <span class="num">1</span>, <span class="num">0</span>)  <span class="cmt">// 문 닫기</span></code></pre>
 
 <!-- ==================== 6. 기술 사양 ==================== -->
 <h1 id="sec6" class="page-break">6. 기술 사양</h1>
@@ -731,27 +744,6 @@ gs805.<span class="fn">executeChannel</span>(
   </tbody>
 </table>
 
-<h2 id="sec7-5">7.5 Recipe RSTA Codes (0x1D)</h2>
-<p><code>setDrinkRecipeProcess()</code> 명령의 응답 코드입니다.</p>
-<table>
-  <thead><tr><th>코드</th><th>설명</th></tr></thead>
-  <tbody>
-    <tr><td><code>0x00</code></td><td>명령 정상 실행</td></tr>
-    <tr><td><code>0x02</code></td><td>레시피 저장 오류</td></tr>
-    <tr><td><code>0xD1</code></td><td>인스턴트 매개변수 오류</td></tr>
-    <tr><td><code>0xD2</code></td><td>분쇄 매개변수 오류</td></tr>
-    <tr><td><code>0xD3</code></td><td>컵 디스펜서/배치 매개변수 오류</td></tr>
-    <tr><td><code>0xD4</code></td><td>제빙 매개변수 오류</td></tr>
-    <tr><td><code>0xD5</code></td><td>뚜껑 배치 매개변수 오류</td></tr>
-    <tr><td><code>0xD6</code></td><td>뚜껑 압착 매개변수 오류</td></tr>
-    <tr><td><code>0xD7</code></td><td>독립 교반 매개변수 오류</td></tr>
-    <tr><td><code>0xFA</code></td><td>작업 단계 매개변수 구문 분석 오류</td></tr>
-    <tr><td><code>0xFB</code></td><td>OPT-n 매개변수 오류</td></tr>
-    <tr><td><code>0xFC</code></td><td>Drink_NO 매개변수 오류</td></tr>
-    <tr><td><code>0xFD</code></td><td>단계 오류 (예: 컵 배치 전 인스턴트 실행)</td></tr>
-    <tr><td><code>0xFE</code></td><td>현재 메인 보드가 이 명령을 지원하지 않음</td></tr>
-  </tbody>
-</table>
 <div class="info-box">
   <strong>참고:</strong> 상태 코드의 전체 상세 내용은 GS805 프로토콜 문서를 참조하십시오. SDK의 응답 객체는 이 코드들을 파싱하여 타입 안전한 enum/sealed class로 제공합니다.
 </div>
