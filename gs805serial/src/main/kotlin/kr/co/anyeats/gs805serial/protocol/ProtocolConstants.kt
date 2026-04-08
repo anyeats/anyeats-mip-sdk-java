@@ -28,6 +28,8 @@ object CommandCodes {
     const val GET_BALANCE = 0x0F
     const val RETURN_CHANGE = 0x10
     const val CLEAN_SPECIFIC_PIPE = 0x12
+    /** 0x15: Set drink recipe water/material time (Series 2,3,R) */
+    const val SET_DRINK_RECIPE_TIME = 0x15
     /** 0x1A: Unit function test (3,R series) */
     const val UNIT_FUNCTION_TEST = 0x1A
     /** 0x1B: Electronic lock control (3,R series) */

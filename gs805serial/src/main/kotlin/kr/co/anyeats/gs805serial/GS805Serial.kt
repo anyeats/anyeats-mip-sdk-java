@@ -185,6 +185,34 @@ class GS805Serial(
         }
     }
 
+    // ========== Recipe Time (0x15) ==========
+
+    /**
+     * Set drink recipe time (0x15, Series 2,3,R).
+     * Sets material duration and water amount for each channel (1-8).
+     *
+     * @param drink Drink number
+     * @param channelTimes 8 pairs of (materialDuration, waterAmount) in 0.1s units.
+     *                     (0,0) = channel disabled.
+     */
+    suspend fun setDrinkRecipeTime(drink: DrinkNumber, channelTimes: List<Pair<Int, Int>>) {
+        ensureConnected()
+        if (enableLogging) _logger.info("Recipe", "Setting recipe time for ${drink.displayName}...")
+
+        val command = GS805Protocol.setDrinkRecipeTimeCommand(drink.code, channelTimes)
+        try {
+            if (enableCommandQueue && _commandQueue != null) {
+                _commandQueue!!.enqueue(command).await()
+            } else {
+                _manager.sendCommand(command)
+            }
+            if (enableLogging) _logger.info("Recipe", "Recipe time set successfully for ${drink.displayName}")
+        } catch (e: Exception) {
+            if (enableLogging) _logger.error("Recipe", "Failed to set recipe time for ${drink.displayName}", e)
+            throw e
+        }
+    }
+
     // ========== Temperature Control ==========
 
     suspend fun setHotTemperature(upperLimit: Int, lowerLimit: Int) {
@@ -570,6 +598,17 @@ class GS805Serial(
             if (enableLogging) _logger.error("Control", "Failed to send cup delivery command", e)
             throw e
         }
+    }
+
+    // ========== Raw Command ==========
+
+    /**
+     * Send a raw CommandMessage and return the response.
+     * Use for commands not yet wrapped in dedicated methods.
+     */
+    suspend fun sendRawCommand(command: CommandMessage): ResponseMessage {
+        ensureConnected()
+        return _manager.sendCommand(command)
     }
 
     // ========== Event Flows ==========

@@ -649,24 +649,24 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Front Door Open
+        // Front Door Open: testCmd=3, DATA1=4, DATA2=0
         findViewById<Button>(R.id.btnLockDoor).setOnClickListener {
             lifecycleScope.launch {
                 try {
-                    gs805.unitFunctionTest(3, 1, 0, 0)
-                    appendLog("Door test: open (3,1,0,0)")
+                    gs805.unitFunctionTest(3, 4, 0, 0)
+                    appendLog("Door open (3,4,0,0)")
                 } catch (e: Exception) {
                     appendLog("ERROR: ${e.message}")
                 }
             }
         }
 
-        // Front Door Close
+        // Front Door Close: testCmd=3, DATA1=4, DATA2=1
         findViewById<Button>(R.id.btnUnlockDoor).setOnClickListener {
             lifecycleScope.launch {
                 try {
-                    gs805.unitFunctionTest(3, 0, 0, 0)
-                    appendLog("Door test: close (3,0,0,0)")
+                    gs805.unitFunctionTest(3, 4, 1, 0)
+                    appendLog("Door close (3,4,1,0)")
                 } catch (e: Exception) {
                     appendLog("ERROR: ${e.message}")
                 }
@@ -677,8 +677,8 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnGetLockStatusMaint).setOnClickListener {
             lifecycleScope.launch {
                 try {
-                    gs805.unitFunctionTest(3, 2, 0, 0)
-                    appendLog("Door test: (3,2,0,0)")
+                    gs805.unitFunctionTest(3, 4, 0, 0)
+                    appendLog("Door test: (3,4,0,0)")
                 } catch (e: Exception) {
                     appendLog("ERROR: ${e.message}")
                 }

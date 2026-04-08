@@ -143,6 +143,33 @@ object GS805Protocol {
         return CommandMessage.withByte(CommandCodes.CLEAN_SPECIFIC_PIPE, pipeNumber)
     }
 
+    /**
+     * Create a command to set drink recipe time (0x15, Series 2,3,R).
+     * Sets material duration and water amount for each channel (1-8).
+     * Sequential order (no reordering).
+     *
+     * @param drinkNumber Drink number (0x01-0x07 hot, 0x11-0x17 cold)
+     * @param channelTimes List of 8 pairs: (materialDuration, waterAmount) in 0.1s units (0-999).
+     *                     (0,0) = channel disabled.
+     */
+    fun setDrinkRecipeTimeCommand(
+        drinkNumber: Int,
+        channelTimes: List<Pair<Int, Int>>
+    ): CommandMessage {
+        require(DrinkNumbers.isValid(drinkNumber)) { "Invalid drink number: 0x${drinkNumber.toString(16)}" }
+        require(channelTimes.size == 8) { "Must provide exactly 8 channel times, got ${channelTimes.size}" }
+
+        // Sequential order (no reordering)
+        val dataList = mutableListOf<Byte>(drinkNumber.toByte())
+        for ((mat, wat) in channelTimes) {
+            dataList.add(((mat shr 8) and 0xFF).toByte())
+            dataList.add((mat and 0xFF).toByte())
+            dataList.add(((wat shr 8) and 0xFF).toByte())
+            dataList.add((wat and 0xFF).toByte())
+        }
+        return CommandMessage(CommandCodes.SET_DRINK_RECIPE_TIME, dataList.toByteArray())
+    }
+
     /** Create a command to set drink recipe process (0x1D) */
     fun setDrinkRecipeProcessCommand(drinkNumber: Int, steps: List<RecipeStep>): CommandMessage {
         require(DrinkNumbers.isValid(drinkNumber)) { "Invalid drink number: 0x${drinkNumber.toString(16)}" }
