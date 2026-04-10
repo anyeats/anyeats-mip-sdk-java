@@ -80,7 +80,8 @@ object StatusCodes {
     }
 
     fun isSuccess(code: Int): Boolean = code == SUCCESS
-    fun isError(code: Int): Boolean = code != SUCCESS && code != ACTIVE_REPORT && code < 0x80
+    /** 0x02-0x08만 에러, 나머지(0x00 success, 0x01 busy, 0x09+ status, 0x7F activeReport)는 비에러 */
+    fun isError(code: Int): Boolean = code in 0x02..0x08
 }
 
 /** Drink number definitions */

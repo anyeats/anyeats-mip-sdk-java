@@ -254,6 +254,7 @@
   <table>
     <thead><tr><th>버전</th><th>날짜</th><th>내용</th></tr></thead>
     <tbody>
+      <tr><td>0.1.3</td><td>2026-04-09</td><td>결제 Flow 수정: Request Vend → 카드 태그 순서, 상태 체크 제거</td></tr>
       <tr><td>0.1.1</td><td>2026-04-02</td><td>Hardware UART 연결 방식 추가</td></tr>
       <tr><td>0.1</td><td>2026-04-01</td><td>초판 작성</td></tr>
     </tbody>
@@ -464,22 +465,18 @@ dependencies {
 mdb.<span class="fn">connect</span>(devices.first())
 
 <span class="cmt">// 2. 초기 설정 (앱 시작 시 1회)</span>
-mdb.<span class="fn">setup</span>(maxPrice = <span class="num">0xFFFF</span>, minPrice = <span class="num">0x0000</span>)
+mdb.<span class="fn">setup</span>()
 mdb.<span class="fn">enable</span>()
 
-<span class="cmt">// 3. 이벤트 수신 (Coroutine scope 내)</span>
+<span class="cmt">// 3. 결제 요청 (가격 전송 → 카드리더에 결제 대기 화면 표시)</span>
+mdb.<span class="fn">requestVend</span>(price = <span class="num">100</span>, itemNumber = <span class="num">1</span>)
+
+<span class="cmt">// 4. 사용자가 카드 태그/삽입 → 이벤트 수신</span>
 mdb.eventFlow.<span class="fn">collect</span> { event ->
     <span class="kw">when</span> (event.type) {
-        <span class="type">CashlessEventType</span>.CARD_DETECTED -> {
-            <span class="cmt">// 카드 감지 → 결제 요청</span>
-            <span class="kw">val</span> funds = event.data[<span class="str">"funds"</span>] <span class="kw">as</span>? <span class="type">Int</span>
-            <span class="fn">println</span>(<span class="str">"카드 감지, 잔액: $funds"</span>)
-            mdb.<span class="fn">requestVend</span>(price = <span class="num">1000</span>, itemNumber = <span class="num">1</span>)
-        }
         <span class="type">CashlessEventType</span>.VEND_APPROVED -> {
             <span class="cmt">// 결제 승인 → 상품 배출</span>
-            <span class="kw">val</span> amount = event.data[<span class="str">"amount"</span>] <span class="kw">as</span>? <span class="type">Int</span>
-            <span class="fn">println</span>(<span class="str">"결제 승인: $amount"</span>)
+            <span class="fn">println</span>(<span class="str">"결제 승인: ${event.data["amount"]}"</span>)
             <span class="cmt">// ... 상품 배출 로직 ...</span>
             mdb.<span class="fn">vendSuccess</span>(itemNumber = <span class="num">1</span>)
             mdb.<span class="fn">sessionComplete</span>()
@@ -492,9 +489,14 @@ mdb.eventFlow.<span class="fn">collect</span> { event ->
     }
 }
 
-<span class="cmt">// 4. 종료</span>
+<span class="cmt">// 5. 종료</span>
 mdb.<span class="fn">disconnect</span>()
 mdb.<span class="fn">dispose</span>()</code></pre>
+
+<div class="info-box">
+  <strong>결제 Flow:</strong> Setup &rarr; Enable &rarr; <strong>Request Vend (가격 전송)</strong> &rarr; 카드 태그 &rarr; 승인/거부 &rarr; Vend Success/Cancel &rarr; Session Complete<br>
+  카드리더가 Request Vend를 받으면 결제 대기 화면을 표시하며, 사용자가 카드를 태그하면 결제가 진행됩니다.
+</div>
 
 <h2 id="sec4-2">4.2 결제 취소 플로우</h2>
 <pre><code><span class="cmt">// 결제 진행 중 취소</span>
@@ -518,13 +520,16 @@ mdb.<span class="fn">setup</span>()
 mdb.<span class="fn">enable</span>()
 
 <span class="cmt">// 결제 → 음료 제조 통합 플로우</span>
+
+<span class="cmt">// 1. 결제 요청 (사용자가 메뉴 선택 + 쿠폰 적용 후 최종 가격)</span>
+mdb.<span class="fn">requestVend</span>(price = drinkPrice, itemNumber = drinkNumber)
+
+<span class="cmt">// 2. 이벤트 수신 (카드 태그 후 승인/거부)</span>
 <span class="fn">launch</span> {
     mdb.eventFlow.<span class="fn">collect</span> { event ->
         <span class="kw">when</span> (event.type) {
-            <span class="type">CashlessEventType</span>.CARD_DETECTED -> {
-                mdb.<span class="fn">requestVend</span>(price = drinkPrice, itemNumber = drinkNumber)
-            }
             <span class="type">CashlessEventType</span>.VEND_APPROVED -> {
+                <span class="cmt">// 결제 승인 → 음료 제조</span>
                 gs805.<span class="fn">makeDrink</span>(<span class="type">DrinkNumber</span>.HOT_DRINK_1)
             }
             <span class="type">CashlessEventType</span>.VEND_DENIED -> {
@@ -535,7 +540,7 @@ mdb.<span class="fn">enable</span>()
     }
 }
 
-<span class="cmt">// 음료 완성 이벤트 → 결제 확정</span>
+<span class="cmt">// 3. 음료 완성 이벤트 → 결제 확정</span>
 <span class="fn">launch</span> {
     gs805.eventFlow.<span class="fn">collect</span> { event ->
         <span class="kw">if</span> (event.type == <span class="type">MachineEventType</span>.DRINK_COMPLETE) {
@@ -546,8 +551,8 @@ mdb.<span class="fn">enable</span>()
 }</code></pre>
 
 <div class="info-box">
-  <strong>참고:</strong> GS805 머신과 MDB 카드리더는 <strong>별도의 시리얼 포트</strong>를 사용합니다.
-  USB 연결 시 VID/PID로, UART 연결 시 디바이스 경로(/dev/ttyS*)로 구분하여 올바른 장치에 연결해야 합니다.
+  <strong>참고:</strong> GS805 머신(ttyS7)과 MDB 카드리더(ttyS9)는 <strong>별도의 시리얼 포트</strong>를 사용합니다.
+  각각 별도의 <code>UartSerialConnection</code> 인스턴스로 연결합니다.
 </div>
 
 <div class="warn-box">
