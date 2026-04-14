@@ -128,9 +128,10 @@ class MdbCashless(private val serialImpl: SerialConnection) {
 
     suspend fun requestVend(price: Int, itemNumber: Int = 1) {
         ensureConnected()
-        check(_state == CashlessState.SESSION_IDLE) {
-            "Cannot request vend in state: ${_state.displayName}. Must be in Session Idle state."
-        }
+        // 상태 체크 제거: 일부 카드리더는 Enable 상태에서 바로 Request Vend 가능
+        // check(_state == CashlessState.SESSION_IDLE) {
+        //     "Cannot request vend in state: ${_state.displayName}. Must be in Session Idle state."
+        // }
 
         _pendingVend = VendRequest(price = price, itemNumber = itemNumber)
         sendHex(intArrayOf(
@@ -177,6 +178,15 @@ class MdbCashless(private val serialImpl: SerialConnection) {
     suspend fun requestId() {
         ensureConnected()
         sendHex(intArrayOf(0x17, 0x00))
+    }
+
+    /**
+     * Send raw hex bytes via MDB.
+     * Useful for sending arbitrary commands not covered by high-level methods.
+     */
+    suspend fun sendRawHex(bytes: List<Int>) {
+        ensureConnected()
+        sendHex(bytes.toIntArray())
     }
 
     // ========== Internal ==========

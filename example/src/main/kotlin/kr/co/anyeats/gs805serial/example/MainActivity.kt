@@ -975,6 +975,17 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        findViewById<Button>(R.id.btnMdbSetPrice).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    mdbCashless.sendRawHex(listOf(0x11, 0x01, 0xFF, 0xFF, 0x00, 0x00))
+                    appendLog("MDB: Set Price sent (max=FFFF, min=0000)")
+                } catch (e: Exception) {
+                    appendLog("MDB ERROR: ${e.message}")
+                }
+            }
+        }
     }
 
     // ========== Debug Panel ==========

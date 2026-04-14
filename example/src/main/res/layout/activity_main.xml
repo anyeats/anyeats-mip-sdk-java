@@ -662,6 +662,18 @@
                         android:text="@string/btn_mdb_cash_sale" />
                 </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnMdbSetPrice"
+                        style="@style/BtnStyle"
+                        android:text="@string/btn_mdb_set_price" />
+                </LinearLayout>
+
             </LinearLayout>
         </ScrollView>
 
