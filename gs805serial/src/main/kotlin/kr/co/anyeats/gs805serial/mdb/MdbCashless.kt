@@ -107,6 +107,57 @@ class MdbCashless(private val serialImpl: SerialConnection) {
         emitEvent(CashlessEventType.STATE_CHANGED)
     }
 
+    /**
+     * Initialize card reader using manufacturer's Level 2/3 sequence.
+     *
+     * Full initialization flow:
+     * 1. Config Level 2 + Level 3
+     * 2. Set Max/Min Price
+     * 3. Expansion Request ID (with VMC identification)
+     * 4. Expansion Enable
+     * 5. Reader Enable
+     */
+    suspend fun setupV2(maxPrice: Int = 0xFFFF, minPrice: Int = 0x0000) {
+        ensureConnected()
+
+        // 1. Config Level 2
+        sendHex(intArrayOf(0x11, 0x00, 0x02, 0x00, 0x00, 0x02))
+        delay(300)
+
+        // 2. Config Level 3
+        sendHex(intArrayOf(0x11, 0x00, 0x03, 0x00, 0x00, 0x00))
+        delay(300)
+
+        // 3. Set max/min price
+        sendHex(intArrayOf(
+            0x11, 0x01,
+            (maxPrice shr 8) and 0xFF, maxPrice and 0xFF,
+            (minPrice shr 8) and 0xFF, minPrice and 0xFF
+        ))
+        delay(300)
+
+        // 4. Expansion Request ID (VMC: "NEC" + serial + model + sw + feature)
+        sendHex(intArrayOf(
+            0x17, 0x00,
+            0x4E, 0x45, 0x43, // "NEC"
+            0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, // "000000000000"
+            0x20, 0x20, 0x20, // "   "
+            0x53, 0x4F, 0x4C, 0x49, 0x53, 0x54, 0x41, 0x20, 0x20, // "SOLISTA  "
+            0x00, 0x11
+        ))
+        delay(300)
+
+        // 5. Expansion Enable
+        sendHex(intArrayOf(0x17, 0x04, 0x00, 0x00, 0x00, 0x20))
+        delay(300)
+
+        // 6. Reader Enable
+        sendHex(intArrayOf(0x14, 0x01))
+
+        _state = CashlessState.ENABLED
+        emitEvent(CashlessEventType.STATE_CHANGED)
+    }
+
     suspend fun enable() {
         ensureConnected()
         sendHex(intArrayOf(0x14, 0x01))
