@@ -206,6 +206,7 @@ class MdbCashless(private val serialImpl: SerialConnection) {
         sendHex(intArrayOf(0x13, 0x01))
         _state = CashlessState.ENABLED
         _pendingVend = null
+        emitEvent(CashlessEventType.SESSION_CANCELLED)
         emitEvent(CashlessEventType.STATE_CHANGED)
     }
 
