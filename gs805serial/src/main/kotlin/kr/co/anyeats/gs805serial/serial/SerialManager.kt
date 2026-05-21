@@ -99,7 +99,7 @@ class SerialManager(
     /** Send a command and wait for matching response */
     suspend fun sendCommand(
         command: CommandMessage,
-        timeoutMs: Long = 100,
+        timeoutMs: Long = 2000,
         retries: Int = 2
     ): ResponseMessage {
         if (!isConnected) throw NotConnectedException("Cannot send command: not connected")

@@ -40,7 +40,7 @@ class QueuedCommand(
     val command: CommandMessage,
     val maxRetries: Int = 3,
     var currentAttempt: Int = 0,
-    val timeoutMs: Long = 100
+    val timeoutMs: Long = 2000
 ) {
     val deferred = CompletableDeferred<ResponseMessage>()
     val addedAt: Date = Date()
@@ -76,7 +76,7 @@ class CommandQueue(
 
     var autoRetry = true
     var defaultMaxRetries = 3
-    var defaultTimeoutMs = 100L
+    var defaultTimeoutMs = 2000L
 
     val status: QueueStatus get() = _status
     val length: Int get() = queue.size

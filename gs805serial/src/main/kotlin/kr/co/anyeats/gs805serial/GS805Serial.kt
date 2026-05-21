@@ -85,7 +85,7 @@ class GS805Serial(
 
     // ========== Drink Making ==========
 
-    suspend fun makeDrink(drink: DrinkNumber, useLocalBalance: Boolean = false, timeoutMs: Long = 100) {
+    suspend fun makeDrink(drink: DrinkNumber, useLocalBalance: Boolean = false, timeoutMs: Long = 2000) {
         ensureConnected()
         if (enableLogging) _logger.info("Drink", "Making ${drink.displayName}...")
 
@@ -240,21 +240,21 @@ class GS805Serial(
         )
     }
 
-    suspend fun getMachineStatus(): MachineStatus {
+    suspend fun getMachineStatus(timeoutMs: Long = 2000): MachineStatus {
         ensureConnected()
-        val response = _manager.sendCommand(GS805Protocol.getMachineStatusCommand())
+        val response = _manager.sendCommand(GS805Protocol.getMachineStatusCommand(), timeoutMs = timeoutMs)
         return MachineStatus.fromCode(response.statusCode ?: 0)
     }
 
-    suspend fun getErrorCode(): MachineError {
+    suspend fun getErrorCode(timeoutMs: Long = 2000): MachineError {
         ensureConnected()
-        val response = _manager.sendCommand(GS805Protocol.getErrorCodeCommand())
+        val response = _manager.sendCommand(GS805Protocol.getErrorCodeCommand(), timeoutMs = timeoutMs)
         val errorCode = response.getDataByte(0) ?: 0
         return MachineError(errorCode = errorCode)
     }
 
-    suspend fun getErrorInfo(): ErrorInfo {
-        val error = getErrorCode()
+    suspend fun getErrorInfo(timeoutMs: Long = 2000): ErrorInfo {
+        val error = getErrorCode(timeoutMs = timeoutMs)
         return ErrorInfo.fromError(error)
     }
 
@@ -461,16 +461,16 @@ class GS805Serial(
      * Query main controller status (0x1E, R series).
      * Returns detailed bit-field status of all machine subsystems.
      */
-    suspend fun getControllerStatus(): ControllerStatus {
+    suspend fun getControllerStatus(timeoutMs: Long = 2000): ControllerStatus {
         ensureConnected()
         if (enableLogging) _logger.info("Status", "Querying controller status...")
 
         val command = GS805Protocol.getControllerStatusCommand()
         try {
             val response = if (enableCommandQueue && _commandQueue != null) {
-                _commandQueue!!.enqueue(command).await()
+                _commandQueue!!.enqueue(command, timeoutMs = timeoutMs).await()
             } else {
-                _manager.sendCommand(command)
+                _manager.sendCommand(command, timeoutMs = timeoutMs)
             }
             // 0x1E response has no STA byte; data is ST_INFO(4) + optional drink_NO(1)
             val data = response.data
@@ -489,16 +489,16 @@ class GS805Serial(
      * Query drink preparation status (0x1F, R series).
      * Returns detailed progress of current drink being prepared.
      */
-    suspend fun getDrinkStatus(): DrinkPreparationStatus {
+    suspend fun getDrinkStatus(timeoutMs: Long = 2000): DrinkPreparationStatus {
         ensureConnected()
         if (enableLogging) _logger.info("Status", "Querying drink preparation status...")
 
         val command = GS805Protocol.getDrinkStatusCommand()
         try {
             val response = if (enableCommandQueue && _commandQueue != null) {
-                _commandQueue!!.enqueue(command).await()
+                _commandQueue!!.enqueue(command, timeoutMs = timeoutMs).await()
             } else {
-                _manager.sendCommand(command)
+                _manager.sendCommand(command, timeoutMs = timeoutMs)
             }
             // 0x1F response has no STA byte; data is DK_INFO(4bytes)
             val data = response.data
