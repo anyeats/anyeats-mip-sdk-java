@@ -129,6 +129,9 @@ class SerialManager(
                         retryCount = attempt
                     )
                 }
+                // Linear backoff: 다음 attempt 전 (attempt+1)*100ms 대기.
+                // Series 3 단일 스레드 펌웨어가 이전 명령을 마저 처리할 시간 확보.
+                delay(100L * (attempt + 1))
             }
         }
 
