@@ -486,7 +486,16 @@ class GS805Serial(
     }
 
     /**
-     * Query drink preparation status (0x1F, R series).
+     * Query drink preparation status (0x1F, **R Series 전용**).
+     *
+     * ⚠️ **GS805 (Series 3) 펌웨어는 0x1F 명령에 응답하지 않습니다.**
+     * 2026-05-21 raw bytes 진단으로 실측 확인: TX `AA 55 03 1F 20 41` 송신 후 RX 0바이트.
+     * 스펙상 [3/R]로 분류되지만, 실제로는 R Series 전용으로 취급해야 합니다.
+     *
+     * GS805에서 음료 제작 진행 상태를 모니터링하려면:
+     * - [getControllerStatus] (0x1E) 로 전체 상태 + drinkNumber 폴링
+     * - [eventFlow] 으로 0x10 (음료 제조 완료) 능동 보고 수신
+     *
      * Returns detailed progress of current drink being prepared.
      */
     suspend fun getDrinkStatus(timeoutMs: Long = 3000): DrinkPreparationStatus {
