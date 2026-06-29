@@ -20,6 +20,15 @@ dependencies {
 }
 ```
 
+> **첫 빌드 주의**: JitPack은 해당 태그(`1.0.0`)를 **최초 요청 시점에 빌드**하므로 수십 초 걸릴 수 있고,
+> 이때 Gradle이 `Read timed out`(또는 일시적 `429 Too Many Requests`)으로 실패할 수 있습니다.
+> 한 번 빌드되면 캐시되어 이후엔 즉시 받아집니다. 첫 요청이 느리면 `gradle.properties`에 HTTP 타임아웃을 늘려주세요:
+>
+> ```properties
+> systemProp.org.gradle.internal.http.connectionTimeout=120000
+> systemProp.org.gradle.internal.http.socketTimeout=120000
+> ```
+
 ## 빠른 시작
 
 ```kotlin
