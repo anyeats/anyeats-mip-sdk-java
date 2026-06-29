@@ -426,6 +426,25 @@
                         android:text="@string/btn_return_change" />
                 </LinearLayout>
 
+                <!-- Water Only dispense (0x15 setDrinkRecipeTime + makeDrink, material=0) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <Button
+                        android:id="@+id/btnWaterOnlyHot"
+                        style="@style/BtnStyle"
+                        android:text="Water Only (Hot)" />
+
+                    <Button
+                        android:id="@+id/btnWaterOnlyCold"
+                        style="@style/BtnStyle"
+                        android:layout_marginEnd="0dp"
+                        android:text="Water Only (Cold)" />
+                </LinearLayout>
+
                 <!-- Front Door Control (0x1A testCmd=3) -->
                 <LinearLayout
                     android:layout_width="match_parent"

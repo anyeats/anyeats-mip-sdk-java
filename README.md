@@ -201,6 +201,23 @@ gs805.executeChannel(channel = 1, waterType = WaterType.HOT,
     materialDuration = 500, waterAmount = 0, materialSpeed = 50)
 ```
 
+### 물만 토출 (분말 없이)
+
+`setDrinkRecipeTime`(0x15) + `makeDrink` 로 물만 토출합니다.
+(`executeChannel` 0x25 는 실기 펌웨어가 응답하지 않아 사용하지 않습니다.)
+모든 채널 재료(material)를 0으로 두고 대상 채널 물(water)만 0보다 크게 설정합니다.
+온수/냉수는 음료 번호(HOT/COLD)로 선택됩니다.
+
+```kotlin
+// 8채널(ch1~8), Pair(재료, 물) — 0.1초 단위. 재료=0 → 물만.
+val times = listOf(
+    0 to 100, // ch1: 재료 0, 물 10초 → 물만 토출
+    0 to 0, 0 to 0, 0 to 0, 0 to 0, 0 to 0, 0 to 0, 0 to 0 // ch2~8 off
+)
+gs805.setDrinkRecipeTime(DrinkNumber.HOT_DRINK_1, times) // 또는 COLD_DRINK_1
+gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
+```
+
 > 자세한 내용은 [make_recipe.md](../make_recipe.md) 참조
 
 ## 기술 스택

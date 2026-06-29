@@ -341,6 +341,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Dispense water only (no powder) via setDrinkRecipeTime(0x15) + makeDrink.
+     * Sets material=0 for all channels and water>0 on [channel] (1-based).
+     * [waterTime] is in 0.1s units (default 100 = 10s).
+     */
+    private fun dispenseWaterOnly(
+        label: String,
+        drink: DrinkNumber,
+        channel: Int = 1,
+        waterTime: Int = 100,
+    ) {
+        lifecycleScope.launch {
+            try {
+                // 8 channels (ch1~8), Pair(material, water) in 0.1s units.
+                val times = List(8) { i -> if (i == channel - 1) 0 to waterTime else 0 to 0 }
+                appendLog("Water only (0x15): $label ch$channel water=$waterTime")
+                gs805.setDrinkRecipeTime(drink, times)
+                gs805.makeDrink(drink)
+                appendLog("Water only: $label make sent")
+            } catch (e: Exception) {
+                appendLog("ERROR: ${e.message}")
+            }
+        }
+    }
+
     // ========== Recipe Menu (0x1D) ==========
 
     /** Clear recipe, set new steps, then make drink */
@@ -636,6 +661,17 @@ class MainActivity : AppCompatActivity() {
                     appendLog("ERROR: ${e.message}")
                 }
             }
+        }
+
+        // Water only (no powder): setDrinkRecipeTime(0x15) + makeDrink.
+        // executeChannel(0x25) is not honored by the firmware, so use 0x15 instead.
+        // ch1 water only (material=0), Hot/Cold chosen by drink number.
+        findViewById<Button>(R.id.btnWaterOnlyHot).setOnClickListener {
+            dispenseWaterOnly("Hot", DrinkNumber.HOT_DRINK_1)
+        }
+
+        findViewById<Button>(R.id.btnWaterOnlyCold).setOnClickListener {
+            dispenseWaterOnly("Cold", DrinkNumber.COLD_DRINK_1)
         }
 
         findViewById<Button>(R.id.btnReturnChange).setOnClickListener {
