@@ -30,6 +30,10 @@ val gs805 = GS805Serial(context)
 val devices = gs805.listDevices()
 gs805.connect(devices.first())
 
+// (내장 UART 기기는 USB 호스트 대신 하드웨어 UART 포트 사용)
+// val gs805 = GS805Serial(context, connection = UartSerialConnection())
+// → /dev/ttyS*, /dev/ttyHS* 등을 검색. 실기는 /dev/ttyS7 (9600 8N1)
+
 // 3. 음료 제조
 gs805.makeDrink(DrinkNumber.HOT_DRINK_1)
 
@@ -80,6 +84,7 @@ gs805.dispose()
 | `setDrinkPrice(drink, price)` | 음료 가격 설정 (0-99) |
 | `setDrinkRecipeProcess(drink, steps)` | 커스텀 음료 레시피 정의 (R시리즈) |
 | `executeChannel(channel, waterType, ...)` | 단일 채널 즉시 실행 (R시리즈) |
+| `setDrinkRecipeTime(drink, channelTimes)` | 음료별 채널 출수 시간 설정 (0x15, Series 2/3/R) |
 | `unitFunctionTest(testCmd, data1, data2, data3)` | 단위 기능 테스트 (Series 3/R) |
 | `lockDoor(lockNumber?)` | 전자 잠금 장치 잠금 (Series 3/R) |
 | `unlockDoor(lockNumber?)` | 전자 잠금 장치 해제 (Series 3/R) |
@@ -107,7 +112,8 @@ gs805.dispose()
 GS805Serial (Public API)
 ├── SerialManager
 │   ├── SerialConnection (interface)
-│   │   └── UsbSerialConnection (USB 구현)
+│   │   ├── UsbSerialConnection (USB 호스트 구현)
+│   │   └── UartSerialConnection (내장 하드웨어 UART 구현)
 │   ├── MessageParser (바이트 → ResponseMessage)
 │   └── ReconnectManager (자동 재연결)
 ├── CommandQueue (순차 명령 큐)
