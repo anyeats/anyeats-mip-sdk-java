@@ -8,7 +8,11 @@
     size: A4;
     margin: 20mm 18mm 20mm 18mm;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * {
+    box-sizing: border-box; margin: 0; padding: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
   body {
     font-family: -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
     font-size: 10pt;
@@ -240,8 +244,8 @@
   <div class="cover-title">Interface Guide</div>
   <div class="cover-subtitle">Android SDK (Kotlin)</div>
   <div class="cover-meta">
-    <strong>Version</strong> 1.0<br>
-    <strong>Date</strong> 2026-04-08<br>
+    <strong>Version</strong> 1.1<br>
+    <strong>Date</strong> 2026-06-29<br>
     <strong>Author</strong> Anyeats World Co., Ltd.<br>
     <strong>Contact</strong> rnd@anyeats.co.kr<br>
     <strong>Classification</strong> Confidential
@@ -254,6 +258,7 @@
   <table>
     <thead><tr><th>버전</th><th>날짜</th><th>내용</th></tr></thead>
     <tbody>
+      <tr><td>1.1</td><td>2026-06-29</td><td>응답 타임아웃 정정(100ms→3s), 0x15 예제 ChannelTime→Pair 수정, getDrinkStatus(0x1F) GS805 무응답 명시 및 주문-제작-완성 흐름을 getMachineStatus+getControllerStatus 기반으로 정정, 물만 토출 안내 추가</td></tr>
       <tr><td>1.0</td><td>2026-04-15</td><td>1.0 배포</td></tr>
       <tr><td>0.1.4</td><td>2026-04-10</td><td>주문-제작-완성 흐름 추가</td></tr>
       <tr><td>0.1.3</td><td>2026-04-08</td><td>0x15 레시피 시간 설정 추가, 미지원 명령 제거 (0x1D, 0x25, 0x1B, 0x24)</td></tr>
@@ -311,7 +316,7 @@
   <tr><th>전송 속도</th><td>9600 bps</td></tr>
   <tr><th>데이터 형식</th><td>8N1 (8 data bits, No parity, 1 stop bit)</td></tr>
   <tr><th>바이트 순서</th><td>Big Endian</td></tr>
-  <tr><th>응답 타임아웃</th><td>100ms (재시도 메커니즘 내장)</td></tr>
+  <tr><th>응답 타임아웃</th><td>기본 3s (재시도 + linear backoff 내장). 사양상 응답은 100ms 이내지만 GS805(Series 3, 단일 스레드) 실측 시 첫 응답이 지연되어 기본값을 3s로 설정</td></tr>
 </table>
 
 <h2 id="sec1-2">1.2 지원 모델</h2>
@@ -434,7 +439,7 @@ dependencies {
 
     <tr class="group-header"><td colspan="3">상태 조회 (상세)</td></tr>
     <tr><td>0x1E</td><td><code>getControllerStatus()</code></td><td>메인 컨트롤러 32비트 상세 상태 조회</td></tr>
-    <tr><td>0x1F</td><td><code>getDrinkStatus()</code></td><td>음료 제작 진행률 및 실패 코드 (EM01~EM26)</td></tr>
+    <tr><td>0x1F</td><td><code>getDrinkStatus()</code></td><td>음료 제작 진행률 및 실패 코드 (EM01~EM26). <strong>R시리즈(GS801) 전용</strong> &mdash; GS805 펌웨어는 0x1F에 응답하지 않아 timeout 발생. GS805에서는 <code>getMachineStatus()</code> + <code>getControllerStatus()</code>로 대체</td></tr>
 
     <tr class="group-header"><td colspan="3">에러 조회 (객체별)</td></tr>
     <tr><td>0x22</td><td><code>getObjectException(objectType)</code></td><td>12가지 객체별 상세 에러 정보 조회</td></tr>
@@ -478,6 +483,12 @@ dependencies {
 <div class="info-box">
   <strong>참고:</strong> 채널은 순차적으로 실행됩니다 (재정렬 없음). 값이 (0, 0)인 채널은 비활성화됩니다.
 </div>
+<div class="info-box">
+  <strong>물만 토출 (분말 없이):</strong> 모든 채널의 분말(material)을 0으로 두고 대상 채널의 물(water)만 0보다 크게
+  설정한 뒤 <code>makeDrink()</code>를 호출하면 물만 토출됩니다. 온수/냉수는 음료 번호(HOT/COLD)로 선택합니다.
+  (R시리즈 전용 <code>executeChannel</code>(0x25)은 GS805 펌웨어가 응답하지 않으므로 0x15 + makeDrink를 사용)
+  <br><code>setDrinkRecipeTime(DrinkNumber.HOT_DRINK_1, listOf(0 to 100, 0 to 0, 0 to 0, 0 to 0, 0 to 0, 0 to 0, 0 to 0, 0 to 0))</code>
+</div>
 
 <h2 id="sec4-7">4.7 Event Flows</h2>
 <p>SDK는 Kotlin Flow 기반의 실시간 이벤트 스트리밍을 제공합니다.</p>
@@ -512,22 +523,25 @@ dependencies {
 gs805.<span class="fn">connect</span>(devices.first())
 
 <span class="cmt">// 2. 레시피 시간 설정 (0x15) — 온음료 1번</span>
-<span class="cmt">// ch1: 분말 3.0초 + 물 5.0초, ch2: 분말 2.0초 + 물 3.0초, 나머지 비활성</span>
+<span class="cmt">// 8채널 × Pair(materialTime, waterTime), 0.1초 단위. (0 to 0) = 채널 비활성.</span>
+<span class="cmt">// ch1: 분말 3.0초 + 물 5.0초, ch2: 분말 2.0초, 나머지 비활성</span>
 gs805.<span class="fn">setDrinkRecipeTime</span>(
     drink = <span class="type">DrinkNumber</span>.HOT_DRINK_1,
     channelTimes = <span class="fn">listOf</span>(
-        <span class="type">ChannelTime</span>(materialTime = <span class="num">30</span>, waterTime = <span class="num">50</span>),  <span class="cmt">// ch1: 3.0s, 5.0s</span>
-        <span class="type">ChannelTime</span>(materialTime = <span class="num">20</span>, waterTime = <span class="num">0</span>),   <span class="cmt">// ch2: 2.0s, 물 없음</span>
-        <span class="type">ChannelTime</span>(materialTime = <span class="num">0</span>, waterTime = <span class="num">0</span>),    <span class="cmt">// ch3: 비활성</span>
-        <span class="type">ChannelTime</span>(materialTime = <span class="num">0</span>, waterTime = <span class="num">0</span>),    <span class="cmt">// ch4: 비활성</span>
-        <span class="type">ChannelTime</span>(materialTime = <span class="num">0</span>, waterTime = <span class="num">0</span>),    <span class="cmt">// ch5: 비활성</span>
-        <span class="type">ChannelTime</span>(materialTime = <span class="num">0</span>, waterTime = <span class="num">0</span>),    <span class="cmt">// ch6: 비활성</span>
-        <span class="type">ChannelTime</span>(materialTime = <span class="num">0</span>, waterTime = <span class="num">0</span>),    <span class="cmt">// ch7: 비활성</span>
-        <span class="type">ChannelTime</span>(materialTime = <span class="num">0</span>, waterTime = <span class="num">0</span>),    <span class="cmt">// ch8: 비활성</span>
+        <span class="num">30</span> <span class="kw">to</span> <span class="num">50</span>,  <span class="cmt">// ch1: 분말 3.0s, 물 5.0s</span>
+        <span class="num">20</span> <span class="kw">to</span> <span class="num">0</span>,   <span class="cmt">// ch2: 분말 2.0s, 물 없음</span>
+        <span class="num">0</span> <span class="kw">to</span> <span class="num">0</span>,    <span class="cmt">// ch3: 비활성</span>
+        <span class="num">0</span> <span class="kw">to</span> <span class="num">0</span>,    <span class="cmt">// ch4: 비활성</span>
+        <span class="num">0</span> <span class="kw">to</span> <span class="num">0</span>,    <span class="cmt">// ch5: 비활성</span>
+        <span class="num">0</span> <span class="kw">to</span> <span class="num">0</span>,    <span class="cmt">// ch6: 비활성</span>
+        <span class="num">0</span> <span class="kw">to</span> <span class="num">0</span>,    <span class="cmt">// ch7: 비활성</span>
+        <span class="num">0</span> <span class="kw">to</span> <span class="num">0</span>,    <span class="cmt">// ch8: 비활성</span>
     )
 )
 
-<span class="cmt">// 3. 음료 제조</span>
+<span class="cmt">// 3. 음료 제조 (setDrinkRecipeTime 직후 곧장 보내면 첫 makeDrink가 무시될 수</span>
+<span class="cmt">//    있으니 300~500ms 지연 권장)</span>
+<span class="fn">delay</span>(<span class="num">500</span>)  <span class="cmt">// import kotlinx.coroutines.delay</span>
 gs805.<span class="fn">makeDrink</span>(<span class="type">DrinkNumber</span>.HOT_DRINK_1)
 
 <span class="cmt">// 4. 문 제어 (unitFunctionTest 사용)</span>
@@ -554,18 +568,21 @@ gs805.<span class="fn">unitFunctionTest</span>(<span class="num">3</span>, <span
 <h1 id="sec7" class="page-break">7. 주문-제작-완성 흐름</h1>
 <p>주문 접수부터 음료 완성까지의 전체 상태 추적 흐름입니다.</p>
 
-<h2 id="sec7-1">7.1 상태 확인 명령</h2>
+<div class="warn-box">
+  <strong>중요:</strong> GS805(Series 3)는 <code>getDrinkStatus()</code>(0x1F)에 <strong>응답하지 않습니다</strong>(매번 timeout).
+  따라서 진행 상태는 <code>getMachineStatus()</code>(0x0B) + <code>getControllerStatus()</code>(0x1E) 폴링과
+  능동 보고 <code>DRINK_COMPLETE</code>(0x10) 이벤트로 추적합니다. (0x1F는 R시리즈/GS801 전용 — §8.3 참조)
+</div>
 <table>
   <thead><tr><th>단계</th><th>명령</th><th>확인값</th></tr></thead>
   <tbody>
     <tr><td>주문 접수</td><td>makeDrink() 응답</td><td>STA=0x00 (성공)</td></tr>
     <tr><td>제작 시작</td><td>getMachineStatus() (0x0B)</td><td>Busy (0x01)</td></tr>
-    <tr><td>제작 진행</td><td>getDrinkStatus() (0x1F)</td><td>result=Executing(1), step X/Y</td></tr>
-    <tr><td>컵 배치</td><td>getDrinkStatus() Bit6</td><td>0=미배치, 1=배치됨</td></tr>
-    <tr><td>제작 완료</td><td>getDrinkStatus() Bit30-31</td><td>Success(2)</td></tr>
+    <tr><td>컵 상태/제작 진행</td><td>getControllerStatus() (0x1E)</td><td><code>cupPresentOnHolder</code>(컵 받침대 컵 존재, A09) / <code>noCup</code>(컵 없음, E02) / <code>overallStatus</code></td></tr>
     <tr><td>완성 이벤트</td><td>eventStream 능동 보고</td><td>DRINK_COMPLETE (0x10)</td></tr>
-    <tr><td>컵 회수 대기</td><td>getDrinkStatus() Bit7</td><td>1=회수 대기 중</td></tr>
-    <tr><td>제작 실패</td><td>getDrinkStatus() Bit30-31</td><td>Failure(3) + EM코드</td></tr>
+    <tr><td>컵 수령 대기</td><td>getControllerStatus() (0x1E)</td><td><code>cupPresentOnHolder=true</code> → 사용자에게 "가져가세요"</td></tr>
+    <tr><td>컵 수령 완료</td><td>getControllerStatus() (0x1E)</td><td><code>cupPresentOnHolder=false</code></td></tr>
+    <tr><td>제작 실패</td><td>getMachineStatus() / getErrorInfo() (0x0C)</td><td><code>isError</code> + 에러 코드</td></tr>
     <tr><td>대기 복귀</td><td>getMachineStatus()</td><td>Ready (0x00)</td></tr>
   </tbody>
 </table>
@@ -577,18 +594,21 @@ gs805.<span class="fn">unitFunctionTest</span>(<span class="num">3</span>, <span
 4. MDB: vendApproved 이벤트 수신
 5. GS805: makeDrink(DrinkNumber.HOT_DRINK_1) → STA=0x00
 6. GS805: getMachineStatus() → Busy
-7. GS805: getDrinkStatus() 폴링 → Executing (step 진행)
+7. GS805: getControllerStatus() 폴링 → 컵 상태(cupPresentOnHolder/noCup) 추적
 8. GS805: eventStream → DRINK_COMPLETE 수신
 9. MDB: vendSuccess(itemNumber: 1) → sessionComplete()
 10. GS805: getMachineStatus() → Ready</code></pre>
 
 <h2 id="sec7-3">7.3 실패 시 흐름</h2>
-<pre><code>1. GS805: getDrinkStatus() → Failure(3) + EM코드
-2. MDB: vendCancel() → sessionComplete()
-3. 사용자에게 실패 사유 표시 (EM01~EM26)</code></pre>
+<pre><code>1. GS805: getMachineStatus() → isError / getErrorInfo()로 에러 코드 확인
+2. (제조 중이면) GS805: forceStopDrinkProcess()
+3. MDB: vendCancel() → sessionComplete()
+4. 사용자에게 실패 사유 표시</code></pre>
 
 <div class="info-box">
-  <strong>TIP:</strong> getDrinkStatus()를 주기적으로 폴링하면 실시간 진행률(step/totalSteps)을 확인할 수 있습니다.
+  <strong>TIP:</strong> GS805에서는 <code>getMachineStatus()</code> + <code>getControllerStatus()</code>를 약 250ms~1s 간격으로
+  폴링하여 컵 상태(<code>cupPresentOnHolder</code>/<code>noCup</code>)를 추적하고, 완성은 <code>DRINK_COMPLETE</code> 능동 보고로 확정합니다.
+  (R시리즈/GS801은 <code>getDrinkStatus()</code>로 step/totalSteps 진행률까지 조회 가능)
 </div>
 
 <!-- ==================== 8. 상태 코드 레퍼런스 ==================== -->
@@ -701,6 +721,11 @@ gs805.<span class="fn">unitFunctionTest</span>(<span class="num">3</span>, <span
 
 <h2 id="sec8-3">8.3 Drink Status (0x1F) - DK_INFO</h2>
 <p><code>getDrinkStatus()</code> 응답의 음료 제조 상태 정보입니다.</p>
+<div class="warn-box">
+  <strong>R시리즈(GS801) 전용:</strong> GS805(Series 3) 펌웨어는 0x1F에 응답하지 않습니다(timeout).
+  GS805에서는 §7.1의 <code>getMachineStatus()</code> + <code>getControllerStatus()</code> 조합을 사용하세요.
+  아래 표는 R시리즈 참고용입니다.
+</div>
 
 <h3>Execution Result (Bit 30-31)</h3>
 <table>
